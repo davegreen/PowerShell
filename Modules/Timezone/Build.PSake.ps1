@@ -1,12 +1,16 @@
+Properties {
+  $ModuleName  = 'Timezone'
+}
+
 Task default -depends BuildManifest, Analyze, Test
 
 Task BuildManifest {
-    . "$PSScriptRoot\Timezone\Build-Manifest.ps1"
+    . "$PSScriptRoot\$ModuleName\Build-Manifest.ps1"
 }
 
 Task CleanManifest {
-    if (Test-Path -Path "$PSScriptRoot\Timezone\Timezone.psd1") {
-        Remove-Item -Path "$PSScriptRoot\Timezone\Timezone.psd1"
+    if (Test-Path -Path "$PSScriptRoot\$ModuleName\$ModuleName.psd1") {
+        Remove-Item -Path "$PSScriptRoot\$ModuleName\$ModuleName.psd1"
     }
 }
 
@@ -30,7 +34,12 @@ Task Test {
 Task Deploy -depends BuildManifest, Analyze, Test {
     Invoke-PSDeploy -Path Build.PSDeploy.ps1 -Force -Verbose:$VerbosePreference
 
-    if (Test-Path -Path "$PSScriptRoot\Timezone\Timezone.psd1") {
-        Remove-Item -Path "$PSScriptRoot\Timezone\Timezone.psd1"
+    if (Test-Path -Path "$PSScriptRoot\$ModuleName\$ModuleName.psd1") {
+        Remove-Item -Path "$PSScriptRoot\$ModuleName\$ModuleName.psd1"
     }
+}
+
+Task  Publish -depends Build -requiredVariables $ApiKey {
+    Assert ($ApiKey -ne $null) 'API Key required to publish'
+    Publish-Module -Name Timezone -NuGetApiKey $ApiKey -Confirm
 }
