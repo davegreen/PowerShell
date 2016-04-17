@@ -188,24 +188,18 @@ Register-ArgumentCompleter -CommandName Get-Timezone, Set-Timezone -ParameterNam
         $fakeBoundParameters #A hashtable of the current parameters on the prompt.
     )
 
-    $tz = (tzutil /l)
-    $validoptions = foreach ($t in $tz) { 
-        if (($tz.IndexOf($t) -1) % 3 -eq 0) {
-            $t.Trim()
-        }
-    }
-    
-    $validoptions | Where-Object { $_ -like "$($currentContent)*" } | ForEach-Object {
-        $CompletionText = $_
+    $tz = Get-Timezone -All
+    $tz | Where-Object { $_.Timezone -like "$($currentContent)*" } | ForEach-Object {
+        $CompletionText = $_.Timezone
         if ($_ -match '\s') { 
-            $CompletionText = "'$_'" 
+            $CompletionText = "'$($_.Timezone)'" 
         }
         
         New-Object System.Management.Automation.CompletionResult (
-            $CompletionText,  #Completion text that will show up on the command line.
-            $_,               #List item text that will show up in intellisense.
-            'ParameterValue', #The type of the completion result.
-            "$_ (Timezone)"   #The tooltip info that will show up additionally in intellisense.
+            $CompletionText,                     #Completion text that will show up on the command line.
+            "$($_.Timezone) ($($_.UTCOffset))" , #List item text that will show up in intellisense.
+            'ParameterValue',                    #The type of the completion result.
+            "$($_.Timezone) ($($_.UTCOffset))"   #The tooltip info that will show up additionally in intellisense.
         )
     }
 }
