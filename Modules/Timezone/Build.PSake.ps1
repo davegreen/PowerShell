@@ -29,4 +29,8 @@ Task Test {
 
 Task Deploy -depends Clean, Analyze, Test {
     Invoke-PSDeploy -Path Build.PSDeploy.ps1 -Force -Verbose:$VerbosePreference
+
+    if (Test-Path -Path "$PSScriptRoot\Timezone\Timezone.psd1") {
+        Remove-Item -Path "$PSScriptRoot\Timezone\Timezone.psd1"
+    }
 }
