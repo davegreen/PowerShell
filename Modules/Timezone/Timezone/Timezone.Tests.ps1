@@ -1,3 +1,5 @@
+#Requires -Module Pester
+
 if ((Get-Module).Name -contains 'Timezone') {
     Remove-Module -Name Timezone
 }
