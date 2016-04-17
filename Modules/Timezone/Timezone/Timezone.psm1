@@ -29,9 +29,11 @@ Function Get-TimezoneFromOffset {
             ValueFromPipelineByPropertyName = $True,
             HelpMessage = 'Specify the timezone offset.'
         )]
+
         [ValidateScript({
             $_ -match '^[+-]?[0-9]{2}:[0-9]{2}$'
         })]
+
         [string]$UTCOffset = (Get-Timezone).UTCOffset
     )
 
@@ -122,6 +124,7 @@ Function Get-Timezone {
             ValueFromPipelineByPropertyName = $True,
             HelpMessage = 'Specify the timezone to set (from "tzutil /l").'
         )]
+
         [ValidateScript( {
             $tz = (tzutil /l)
             $validoptions = foreach ($t in $tz) { 
@@ -132,12 +135,15 @@ Function Get-Timezone {
 
             $validoptions -contains $_
         })]
+
         [string]$Timezone = (tzutil /g),
         
         [parameter(
             Position = 2,
             ParameterSetName = 'All',
-            HelpMessage = 'Show all timezones.')]
+            HelpMessage = 'Show all timezones.'
+        )]
+
         [switch]$All
     )
 
@@ -223,16 +229,17 @@ Function Set-Timezone {
             ValueFromPipelineByPropertyName = $True,
             HelpMessage = 'Specify the timezone to set (from "Get-Timezone -All").'
         )]
+
         [ValidateScript({ 
             if (Get-Timezone -Timezone $_) {
                 $True
             }
         })]
+
         [string]$Timezone
     )
     
-    if ($PSCmdlet.ShouldProcess($Timezone))
-    {
+    if ($PSCmdlet.ShouldProcess($Timezone)) {
         Write-Verbose "Setting Timezone to $Timezone"
         tzutil.exe /s $Timezone
     }
