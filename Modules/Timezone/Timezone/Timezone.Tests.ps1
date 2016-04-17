@@ -45,6 +45,12 @@ Describe 'Get-Timezone' {
         }
     }
 
+    Context 'Multiple' {
+        It 'Returns multiple individual timezones' {
+            { Get-Timezone -Timezone 'Eastern Standard Time', 'SA Pacific Standard Time' } | Should Not Throw
+        }
+    }
+
     Context 'PipelineInput' {
         It 'Returns a timezone from pipeline data by value' {
             'UTC' | Get-Timezone | Should Not Be $null
@@ -61,67 +67,6 @@ Describe 'Get-Timezone' {
             { Get-Timezone -Timezone 'My First Timezone' } | Should Throw
             { Get-Timezone -Timezone 0 } | Should Throw
             { Get-Timezone -Timezone 19:00 } | Should Throw
-        }
-    }
-}
-
-Describe 'Get-TimezoneFromOffset' {
-    Context 'UTC' {
-        It 'Returns the UTC timezone offset' {
-            @('00:00', '+00:00', '-00:00') | ForEach-Object {
-                $utcTz = Get-Timezone -Timezone 'UTC'
-                $timezone = Get-TimezoneFromOffset -UTCOffset $_
-                $timezone.Timezone -contains $utcTz.Timezone | Should Be $true
-                $timezone.UTCOffset -contains $utcTz.UTCOffset | Should Be $true
-                $timezone.ExampleLocation -contains $utcTz.ExampleLocation | Should Be $true
-            }
-        }
-    }
-
-    Context 'Current' {
-        It 'Returns the current timezone offset' {
-            $currentTz = Get-Timezone
-            $timezone = Get-TimezoneFromOffset
-            $timezone.Timezone -contains $currentTz.Timezone | Should Be $true
-            $timezone.UTCOffset -contains $currentTz.UTCOffset | Should Be $true
-            $timezone.ExampleLocation -contains $currentTz.ExampleLocation | Should Be $true
-        }
-    }
-
-    Context 'All' {
-        It 'Checks all timezone offsets for consistency with Get-Timezone' {
-            $timezone = Get-Timezone -All
-            Get-Timezone -All | Get-TimezoneFromOffset | ForEach-Object {
-                $timezone.Timezone -contains $_.Timezone | Should Be $true
-                $timezone.UTCOffset -contains $_.UTCOffset | Should Be $true
-                $timezone.ExampleLocation -contains $_.ExampleLocation | Should Be $true
-            }
-        }
-    }
-
-    Context 'Multiple' {
-        It 'Returns multiple individual timezones' {
-            { Get-Timezone -Timezone 'Eastern Standard Time', 'SA Pacific Standard Time' } | Should Not Throw
-        }
-    }
-
-    Context 'PipelineInput' {
-        It 'Returns timezone offsets from pipeline data' {
-            '+00:00' | Get-TimezoneFromOffset | Should Not Be $null
-            '02:00' | Get-TimezoneFromOffset | Should Not Be $null
-            '-04:00' | Get-TimezoneFromOffset | Should Not Be $null
-        }
-
-        It 'Returns a timezone from pipeline data by property name' {
-             Get-Timezone -Timezone 'Pacific Standard Time' | Get-TimezoneFromOffset | Should Not Be $null
-        }
-    }
-
-    Context 'Validation' {
-        It 'Tries to get an invalid timezone offset' {
-            { Get-TimezoneFromOffset -UTCOffset 'My First Timezone' } | Should Throw
-            { Get-TimezoneFromOffset -UTCOffset 0 } | Should Throw
-            Get-TimezoneFromOffset -UTCOffset 19:00 | Should Be $null
         }
     }
 }
