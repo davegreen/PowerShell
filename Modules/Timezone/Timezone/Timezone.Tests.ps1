@@ -33,12 +33,12 @@ Describe 'Get-Timezone' {
     }
 
     Context 'All' {
-        It 'Checks all timezones for consistency with itself' {
-            foreach ($timezone in Get-Timezone -All) {
-                $tz = Get-Timezone -Timezone $timezone.Timezone
-                $tz.Timezone -contains $timezone.Timezone | Should Be $true
-                $tz.UTCOffset -contains $timezone.UTCOffset | Should Be $true
-                $tz.ExampleLocation -contains $timezone.ExampleLocation | Should Be $true
+        It 'Checks all timezones for consistency with individual data return' {
+            $timezone = Get-Timezone -All
+            Get-Timezone -All | Get-Timezone | ForEach-Object {
+                $timezone.Timezone -contains $_.Timezone | Should Be $true
+                $timezone.UTCOffset -contains $_.UTCOffset | Should Be $true
+                $timezone.ExampleLocation -contains $_.ExampleLocation | Should Be $true
             }
         }
     }
@@ -88,11 +88,11 @@ Describe 'Get-TimezoneFromOffset' {
 
     Context 'All' {
         It 'Checks all timezone offsets for consistency with Get-Timezone' {
-            foreach ($timezone in Get-Timezone -All) {
-                $tzo = Get-TimezoneFromOffset -UTCOffset $timezone.UTCOffset
-                $tzo.Timezone -contains $timezone.Timezone | Should Be $true
-                $tzo.UTCOffset -contains $timezone.UTCOffset | Should Be $true
-                $tzo.ExampleLocation -contains $timezone.ExampleLocation | Should Be $true
+            $timezone = Get-Timezone -All
+            Get-Timezone -All | Get-TimezoneFromOffset | ForEach-Object {
+                $timezone.Timezone -contains $_.Timezone | Should Be $true
+                $timezone.UTCOffset -contains $_.UTCOffset | Should Be $true
+                $timezone.ExampleLocation -contains $_.ExampleLocation | Should Be $true
             }
         }
     }
