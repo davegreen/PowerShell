@@ -39,7 +39,7 @@ Task Deploy -depends BuildManifest, Analyze, Test {
     }
 }
 
-Task  Publish -depends Build -requiredVariables $ApiKey {
+Task  Publish -depends Deploy -requiredVariables $ApiKey {
     Assert ($ApiKey -ne $null) 'API Key required to publish'
     Publish-Module -Name Timezone -NuGetApiKey $ApiKey -Confirm
 }
