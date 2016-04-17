@@ -2,28 +2,38 @@
 An example of using the Release Pipeline Model with a PowerShell module
 
 ## Usage
-A ```psake``` script has been created to manage the various operations related to testing and deployment of the Timezone module.
+The timezone module has three functions: Get-Timezone, Get-TimezoneFromOffset and Set-Timezone. Get-Timezone and Get-TimezoneFromOffset both return a PSObject representing a timezone:
+
+```
+ExampleLocation                         UTCOffset Timezone
+---------------                         --------- --------
+(UTC) Casablanca                        +00:00    Morocco Standard Time
+(UTC) Coordinated Universal Time        +00:00    UTC
+(UTC) Dublin, Edinburgh, Lisbon, London +00:00    GMT Standard Time
+(UTC) Monrovia, Reykjavik               +00:00    Greenwich Standard Time
+```
 
 ### Build Operations
+A ```psake``` script has been created to manage the various operations related to testing and deployment of the Timezone module.
 
-* Test the script via Pester and Script Analyzer  
+* Clean and test the script via Pester and Script Analyzer  
 ```powershell
-.\build.ps1
+.\Build.ps1
 ```
-    
-* Test the script with Pester only  
+
+* Test the script with Pester  
 ```powershell
-.\build.ps1 -Task Test
+.\Build.ps1 -Task Test
 ```
-    
+
 * Test the script with Script Analyzer only  
 ```powershell
-.\build.ps1 -Task Analyze
+.\Build.ps1 -Task Analyze
 ```
-    
+
 * Deploy the script via PSDeploy  
 ```powershell
-.\build.ps1 -Task Deploy
+.\Build.ps1 -Task Deploy
 ```
 
 Contact
@@ -35,4 +45,5 @@ Thanks
 ---------------------
 
 [Brandon Olin](https://devblackops.io) - For his excellent deployment pipeline example, which you can see in use here!.
+
 [Rohn Edwards](https://rohnspowershellblog.wordpress.com) - For his session on advanced parameter completion at the PowerShell Global Summit.
