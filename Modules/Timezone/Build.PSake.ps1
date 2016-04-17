@@ -1,7 +1,3 @@
-Properties {
-    #$module = 'Timezone'
-}
-
 Task default -depends BuildManifest, Analyze, Test
 
 Task BuildManifest {
