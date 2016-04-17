@@ -36,14 +36,10 @@ A ```psake``` script has been created to manage the various operations related t
 .\Build.ps1 -Task Deploy
 ```
 
-Contact
----------------------
-
+## Contact
 For help, feedback, suggestions or bugfixes please check out [http://tookitaway.co.uk/](http://tookitaway.co.uk/) or contact david.green@tookitaway.co.uk.
 
-Thanks
----------------------
-
+## Thanks
 [Brandon Olin](https://devblackops.io) - For his excellent deployment pipeline example, which you can see in use here!.
 
 [Rohn Edwards](https://rohnspowershellblog.wordpress.com) - For his session on advanced parameter completion at the PowerShell Global Summit.
