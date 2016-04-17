@@ -67,56 +67,39 @@ Function Get-Timezone {
     )
 
     Begin {
-        $timezones = tzutil /l
+        $tz = tzutil /l
+
+        $Timezones = foreach ($t in $tz) { 
+            if (($tz.IndexOf($t) -1) % 3 -eq 0) {
+                $TimezoneProperties = @{
+                    Timezone = $t
+                    UTCOffset = $null
+                    ExampleLocation = ($tz[$tz.IndexOf($t) - 1]).Trim()
+                }
+
+                if (($tz[$tz.IndexOf($t) - 1]).StartsWith('(UTC)')) {
+                    $TimezoneProperties.UTCOffset = '+00:00'
+                }
+
+                elseif (($tz[$tz.IndexOf($t) - 1]).Length -gt 10) {
+                    $TimezoneProperties.UTCOffset = ($tz[$tz.IndexOf($t) - 1]).SubString(4, 6)
+                }
+
+                $TimezoneObj = New-Object -TypeName PSObject -Property $TimezoneProperties
+                Write-Output $TimezoneObj
+            }
+        }
     }
 
     Process {
         if ($All) {
-            foreach ($t in $timezones) { 
-                if (($timezones.IndexOf($t) -1) % 3 -eq 0) {
-                    $TimezoneProperties = @{
-                        Timezone = $t
-                        UTCOffset = $null
-                        ExampleLocation = ($timezones[$timezones.IndexOf($t) - 1]).Trim()
-                    }
-
-                    if (($timezones[$timezones.IndexOf($t) - 1]).StartsWith('(UTC)')) {
-                        $TimezoneProperties.UTCOffset = '+00:00'
-                    }
-
-                    elseif (($timezones[$timezones.IndexOf($t) - 1]).Length -gt 10) {
-                        $TimezoneProperties.UTCOffset = ($timezones[$timezones.IndexOf($t) - 1]).SubString(4, 6)
-                    }
-
-                    $TimezoneObj = New-Object -TypeName PSObject -Property $TimezoneProperties
-                    Write-Output $TimezoneObj
-                }
-            }
+            Write-Output $Timezones
         }
 
         else {
-            foreach ($tz in $Timezone)
+            foreach ($t in $Timezone)
             {
-                foreach ($t in $timezones) { 
-                    if ($t -match ('^' + [regex]::Escape($tz) + '$')) {
-                        $TimezoneProperties = @{
-                            Timezone = $t
-                            UTCOffset = $null
-                            ExampleLocation = ($timezones[$timezones.IndexOf($t) - 1]).Trim()
-                        }
-
-                        if (($timezones[$timezones.IndexOf($t) - 1]).StartsWith('(UTC)')) {
-                            $TimezoneProperties.UTCOffset = '+00:00'
-                        }
-
-                        elseif (($timezones[$timezones.IndexOf($t) - 1]).Length -gt 10) {
-                            $TimezoneProperties.UTCOffset = ($timezones[$timezones.IndexOf($t) - 1]).SubString(4, 6)
-                        }
-
-                        $TimezoneObj = New-Object -TypeName PSObject -Property $TimezoneProperties
-                        Write-Output $TimezoneObj
-                    }
-                }
+                Write-Output $Timezones | Where-Object { $_.Timezone -eq $t }
             }
         }
     }
