@@ -5,7 +5,9 @@ Properties {
 Task default -depends Clean, Analyze, Test
 
 Task Clean {
-    Remove-Item -Path "$PSScriptRoot\Timezone\Timezone.psd1"
+    if (Test-Path -Path "$PSScriptRoot\Timezone\Timezone.psd1") {
+        Remove-Item -Path "$PSScriptRoot\Timezone\Timezone.psd1"
+    }
 }
 
 Task Analyze {
