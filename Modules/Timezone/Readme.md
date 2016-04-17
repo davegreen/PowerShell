@@ -2,7 +2,7 @@
 An example of using the Release Pipeline Model with a PowerShell module
 
 ## Usage
-The timezone module has three functions: Get-Timezone, Get-TimezoneFromOffset and Set-Timezone. Get-Timezone and Get-TimezoneFromOffset both return a PSObject representing a timezone:
+The timezone module has three functions: ```Get-Timezone```, ```Get-TimezoneFromOffset``` and ```Set-Timezone```. ```Get-Timezone``` and ```Get-TimezoneFromOffset``` both return a PSObject representing a timezone:
 
 ```
 ExampleLocation                         UTCOffset Timezone
