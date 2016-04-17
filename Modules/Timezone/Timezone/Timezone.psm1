@@ -3,6 +3,9 @@ Function Get-TimezoneFromOffset {
       .Synopsis
       A function that gets the timezones that match a particular offset from UTC
 
+      .Description
+      This function is a wrapper around tzutil.exe, aiming to make getting timezones slightly easier.
+
       .Parameter UTCOffset
       A string containing offset time you require. This must match the form +NN:NN, NN:NN or -NN:NN.
 
@@ -92,6 +95,15 @@ Function Get-Timezone {
     <#
       .Synopsis
       A function that retrieves valid computer timezones.
+
+      .Description
+      This function is a wrapper around tzutil.exe, aiming to make getting timezones slightly easier.
+
+      .Parameter Timezone
+      Specify the timezone that you wish to retrieve data for. Not specifying this parameter will return the current timezone.
+
+      .Parameter All
+      Return all timezones supported by tzutil available on the system.
 
       .Example
       Get-Timezone
@@ -205,8 +217,17 @@ Function Set-Timezone {
       .Synopsis
       A function that sets the computer timezone.
 
+      .Description
+      This function is a wrapper around tzutil.exe, aiming to make setting timezones slightly easier.
+
       .Parameter Timezone
       A string containing the display name of the timezone you require. Only valid timezones (from 'tzutil /l') are supported.
+
+      .Parameter WhatIf
+      If Whatif is specified, the user is notified about the timezone that would be set.
+
+      .Parameter Confirm
+      If Confirm is specified, the command will ask for input to change the currently effective timezone.
 
       .Example
       Set-Timezone -Timezone 'Singapore Standard Time'
@@ -218,7 +239,8 @@ Function Set-Timezone {
     #>
 
     [CmdletBinding(
-        SupportsShouldProcess = $True
+        SupportsShouldProcess = $True,
+        ConfirmImpact = 'Medium'
     )]
 
     Param(
