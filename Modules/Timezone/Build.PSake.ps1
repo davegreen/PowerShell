@@ -2,9 +2,13 @@ Properties {
     #$module = 'Timezone'
 }
 
-Task default -depends Clean, Analyze, Test
+Task default -depends BuildManifest, Analyze, Test
 
-Task Clean {
+Task BuildManifest {
+    . "$PSScriptRoot\Timezone\Build-Manifest.ps1"
+}
+
+Task CleanManifest {
     if (Test-Path -Path "$PSScriptRoot\Timezone\Timezone.psd1") {
         Remove-Item -Path "$PSScriptRoot\Timezone\Timezone.psd1"
     }
@@ -27,7 +31,7 @@ Task Test {
     }
 }
 
-Task Deploy -depends Clean, Analyze, Test {
+Task Deploy -depends BuildManifest, Analyze, Test {
     Invoke-PSDeploy -Path Build.PSDeploy.ps1 -Force -Verbose:$VerbosePreference
 
     if (Test-Path -Path "$PSScriptRoot\Timezone\Timezone.psd1") {
