@@ -148,7 +148,7 @@ Function Get-Timezone {
             $validoptions -contains $_
         })]
 
-        [string]$Timezone = (tzutil /g),
+        [string[]]$Timezone = (tzutil /g),
         
         [parameter(
             Position = 2,
@@ -188,24 +188,27 @@ Function Get-Timezone {
         }
 
         else {
-            foreach ($t in $timezones) { 
-                if ($t -match ('^' + [regex]::Escape($Timezone) + '$')) {
-                    $TimezoneProperties = @{
-                        Timezone = $t
-                        UTCOffset = $null
-                        ExampleLocation = ($timezones[$timezones.IndexOf($t) - 1]).Trim()
-                    }
+            foreach ($tz in $Timezone)
+            {
+                foreach ($t in $timezones) { 
+                    if ($t -match ('^' + [regex]::Escape($tz) + '$')) {
+                        $TimezoneProperties = @{
+                            Timezone = $t
+                            UTCOffset = $null
+                            ExampleLocation = ($timezones[$timezones.IndexOf($t) - 1]).Trim()
+                        }
 
-                    if (($timezones[$timezones.IndexOf($t) - 1]).StartsWith('(UTC)')) {
-                        $TimezoneProperties.UTCOffset = '+00:00'
-                    }
+                        if (($timezones[$timezones.IndexOf($t) - 1]).StartsWith('(UTC)')) {
+                            $TimezoneProperties.UTCOffset = '+00:00'
+                        }
 
-                    elseif (($timezones[$timezones.IndexOf($t) - 1]).Length -gt 10) {
-                        $TimezoneProperties.UTCOffset = ($timezones[$timezones.IndexOf($t) - 1]).SubString(4, 6)
-                    }
+                        elseif (($timezones[$timezones.IndexOf($t) - 1]).Length -gt 10) {
+                            $TimezoneProperties.UTCOffset = ($timezones[$timezones.IndexOf($t) - 1]).SubString(4, 6)
+                        }
 
-                    $TimezoneObj = New-Object -TypeName PSObject -Property $TimezoneProperties
-                    Write-Output $TimezoneObj
+                        $TimezoneObj = New-Object -TypeName PSObject -Property $TimezoneProperties
+                        Write-Output $TimezoneObj
+                    }
                 }
             }
         }
@@ -221,7 +224,7 @@ Function Set-Timezone {
       This function is a wrapper around tzutil.exe, aiming to make setting timezones slightly easier.
 
       .Parameter Timezone
-      A string containing the display name of the timezone you require. Only valid timezones (from 'tzutil /l') are supported.
+      A string containing the display name of the timezone you require. Only valid timezones (from 'Get-Timezone -All', or 'tzutil /l') are supported.
 
       .Parameter WhatIf
       If Whatif is specified, the user is notified about the timezone that would be set.
@@ -260,7 +263,7 @@ Function Set-Timezone {
 
         [string]$Timezone
     )
-    
+
     if ($PSCmdlet.ShouldProcess($Timezone)) {
         Write-Verbose "Setting Timezone to $Timezone"
         tzutil.exe /s $Timezone

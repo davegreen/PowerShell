@@ -99,6 +99,12 @@ Describe 'Get-TimezoneFromOffset' {
         }
     }
 
+    Context 'Multiple' {
+        It 'Returns multiple individual timezones' {
+            { Get-Timezone -Timezone 'Eastern Standard Time', 'SA Pacific Standard Time' } | Should Not Throw
+        }
+    }
+
     Context 'PipelineInput' {
         It 'Returns timezone offsets from pipeline data' {
             '+00:00' | Get-TimezoneFromOffset | Should Not Be $null
