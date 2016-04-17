@@ -24,10 +24,10 @@ Function Get-TimezoneFromOffset {
 
     Param(
         [parameter(
-            Position=1,
-            ValueFromPipelineByPropertyName=$True,
-            ValueFromPipeline=$True,
-            HelpMessage='Specify the timezone offset.'
+            Position = 1,
+            ValueFromPipeline = $True,
+            ValueFromPipelineByPropertyName = $True,
+            HelpMessage = 'Specify the timezone offset.'
         )]
         [ValidateScript({
             $_ -match '^[+-]?[0-9]{2}:[0-9]{2}$'
@@ -40,8 +40,8 @@ Function Get-TimezoneFromOffset {
     $timezones = foreach ($t in $tz) {
         if (($tz.IndexOf($t) -1) % 3 -eq 0) {
             $tzProperties = @{
-                Timezone = $t.Trim()
-                UTCOffset = $UTCOffset
+                Timezone        = $t.Trim()
+                UTCOffset       = $UTCOffset
                 ExampleLocation = ($tz[$tz.IndexOf($t) - 1]).Trim()
             }
             
@@ -76,8 +76,8 @@ Function Get-TimezoneFromOffset {
 
     foreach ($tz in $matchedtz) {
         $TimezoneProperties = @{
-            Timezone = $tz.Timezone
-            UTCOffset = $UTCOffset
+            Timezone        = $tz.Timezone
+            UTCOffset       = $UTCOffset
             ExampleLocation = $tz.ExampleLocation
         }
 
@@ -111,16 +111,16 @@ Function Get-Timezone {
     #>
 
     [CmdletBinding(
-        DefaultParametersetName='Specific'
+        DefaultParametersetName = 'Specific'
     )]
     
     Param(
         [parameter(
-            Position=1,
-            ParameterSetName='Specific',
-            ValueFromPipelineByPropertyName=$True,
-            ValueFromPipeline=$True,
-            HelpMessage='Specify the timezone to set (from "tzutil /l").'
+            Position = 1,
+            ParameterSetName = 'Specific',
+            ValueFromPipeline = $True,
+            ValueFromPipelineByPropertyName = $True,
+            HelpMessage = 'Specify the timezone to set (from "tzutil /l").'
         )]
         [ValidateScript( {
             $tz = (tzutil /l)
@@ -135,9 +135,9 @@ Function Get-Timezone {
         [string]$Timezone = (tzutil /g),
         
         [parameter(
-            Position=2,
-            ParameterSetName='All',
-            HelpMessage='Show all timezones.')]
+            Position = 2,
+            ParameterSetName = 'All',
+            HelpMessage = 'Show all timezones.')]
         [switch]$All
     )
 
@@ -212,16 +212,16 @@ Function Set-Timezone {
     #>
 
     [CmdletBinding(
-        SupportsShouldProcess=$True
+        SupportsShouldProcess = $True
     )]
 
     Param(
         [parameter(
-            Mandatory=$True,
-            Position=1,
-            ValueFromPipelineByPropertyName=$True,
-            ValueFromPipeline=$True,
-            HelpMessage='Specify the timezone to set (from "Get-Timezone -All").'
+            Position = 1,
+            Mandatory = $True,
+            ValueFromPipeline = $True,
+            ValueFromPipelineByPropertyName = $True,
+            HelpMessage = 'Specify the timezone to set (from "Get-Timezone -All").'
         )]
         [ValidateScript({ 
             if (Get-Timezone -Timezone $_) {
@@ -239,28 +239,14 @@ Function Set-Timezone {
 }
 
 Register-ArgumentCompleter -CommandName Get-Timezone, Set-Timezone -ParameterName Timezone -ScriptBlock {
-    <#
-      This is the argument completer to return available timezone parameters for use with getting and setting the timezone.
-
-      Provided parameters:
-        Parameter commandName
-            The command calling this arguement completer.
-        Parameter parameterName
-            The parameter currently active for the argument completer.
-        Parameter currentContent
-            The current data in the prompt for the parameter specified above.
-        Parameter commandAst
-            The full AST for the current command.
-        Parameter  fakeBoundParameters
-            A hashtable of the current parameters on the prompt.
-    #>
+    #This is the argument completer to return available timezone parameters for use with getting and setting the timezone.
 
     Param(
-        $commandName,
-        $parameterName,
-        $currentContent,
-        $commandAst,
-        $fakeBoundParameters
+        $commandName,        #The command calling this arguement completer.
+        $parameterName,      #The parameter currently active for the argument completer.
+        $currentContent,     #The current data in the prompt for the parameter specified above.
+        $commandAst,         #The full AST for the current command.
+        $fakeBoundParameters #A hashtable of the current parameters on the prompt.
     )
 
     $tz = (tzutil /l)
