@@ -34,6 +34,26 @@ Describe 'Get-Timezone' {
         }
     }
 
+    Context 'UTCOffset' {
+        It 'Checks the UTCOffset parameter implicit positive returns data' {
+            { (Get-Timezone -UTCOffset '00:00') -eq (Get-Timezone -UTCOffset '+00:00') } | Should Be $True
+            { (Get-Timezone -UTCOffset '01:00') -eq (Get-Timezone -UTCOffset '+01:00') } | Should Be $True
+            { (Get-Timezone -UTCOffset '10:00') -eq (Get-Timezone -UTCOffset '+10:00') } | Should Be $True
+            { (Get-Timezone -UTCOffset '00:00') -eq (Get-Timezone -UTCOffset '-00:00') } | Should Be $True
+            { (Get-Timezone -UTCOffset '05:45') -eq (Get-Timezone -UTCOffset '+05:45') } | Should Be $True
+            { (Get-Timezone -UTCOffset '09:30') -eq (Get-Timezone -UTCOffset '+09:30') } | Should Be $True            
+        }
+    }
+
+    Context 'Match Parametersets' {
+        It 'Checks timezones returned via -UTCOffset can be matched to timezone objects' {
+            $timezones = Get-Timezone -All
+            $timezones | Select-Object -Unique -Property UTCOffset | ForEach-Object {
+                { Get-Timezone -UTCOffset $_ -eq Get-Timezone -All | Where-Object UTCOffset -eq $_ } | Should Be $True    
+            }
+        }
+    }
+
     Context 'All' {
         It 'Checks all timezones for consistency with individual data return' {
             $timezone = Get-Timezone -All

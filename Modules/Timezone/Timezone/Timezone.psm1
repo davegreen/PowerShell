@@ -9,6 +9,9 @@ Function Get-Timezone {
       .Parameter Timezone
       Specify the timezone that you wish to retrieve data for. Not specifying this parameter will return the current timezone.
 
+      .Parameter UTCOffset
+      Specify the offset from UTC to return timezones for, using the format NN:NN (implicitly positive), -NN:NN or +NN:NN.
+
       .Parameter All
       Return all timezones supported by tzutil available on the system.
 
@@ -59,6 +62,19 @@ Function Get-Timezone {
         
         [parameter(
             Position = 2,
+            ParameterSetName = 'ByOffset',
+            HelpMessage = 'Specify the timezone offset.'
+        )]
+
+        [ValidateScript({
+            $_ -match '^[+-]?[0-9]{2}:[0-9]{2}$'
+        })]
+
+        [string]$UTCOffset,
+
+        [parameter(
+            Position = 3,
+
             ParameterSetName = 'All',
             HelpMessage = 'Show all timezones.'
         )]
@@ -92,14 +108,34 @@ Function Get-Timezone {
     }
 
     Process {
-        if ($All) {
-            Write-Output $Timezones
-        }
+        switch ($PSCmdlet.ParameterSetName) {
+            'All' {
+                if ($All) {
+                    Write-Output $Timezones
+                }
+            }
 
-        else {
-            foreach ($t in $Timezone)
-            {
-                Write-Output $Timezones | Where-Object { $_.Timezone -eq $t }
+            'Specific' {
+                foreach ($t in $Timezone)
+                {
+                    Write-Output $Timezones | Where-Object { $_.Timezone -eq $t }
+                }
+            }
+
+            'ByOffset' {
+                foreach ($Offset in $UTCOffset) {
+                    $OffsetOutput = switch ($Offset) {
+                        { $_ -match '^[+-]?00:00'} {
+                            Write-Output '+00:00'
+                        }
+
+                        { $_ -match '^[0-9]*' } {
+                            Write-Output "+$Offset"
+                        }
+                    }
+
+                    Write-Output $Timezones | Where-Object { $_.UTCOffset -eq $OffsetOutput }
+                }
             }
         }
     }
