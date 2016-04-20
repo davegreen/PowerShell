@@ -1,4 +1,5 @@
 [CmdletBinding()]
+
 Param(
     [string[]]$Task = 'default',
     [System.Collections.Hashtable]$Parameters
@@ -9,9 +10,9 @@ if (!(Get-Module -Name psake -ListAvailable))    { Install-Module -Name psake -S
 if (!(Get-Module -Name PSDeploy -ListAvailable)) { Install-Module -Name PSDeploy -Scope CurrentUser }
 
 if ($Parameters) {
-    Invoke-psake -buildFile "$PSScriptRoot\Build.PSake.ps1" -taskList $Task, CleanManifest -parameters $Parameters -Verbose:$VerbosePreference
+    Invoke-psake -buildFile "$PSScriptRoot\Build.PSake.ps1" -taskList $Task, Teardown -parameters $Parameters -Verbose:$VerbosePreference
 }
 
 else {
-    Invoke-psake -buildFile "$PSScriptRoot\Build.PSake.ps1" -taskList $Task, CleanManifest -Verbose:$VerbosePreference
+    Invoke-psake -buildFile "$PSScriptRoot\Build.PSake.ps1" -taskList $Task, Teardown -Verbose:$VerbosePreference
 }
