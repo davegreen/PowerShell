@@ -45,6 +45,13 @@ Describe 'Get-Timezone' {
         }
     }
 
+    Context 'Multiple Offset' {
+        It 'Checks multiple offsets are handled' {
+            Compare-Object -ReferenceObject (Get-Timezone -UTCOffset ((Get-Timezone -All).UTCOffset | Select-Object -Unique)) -DifferenceObject (Get-Timezone -All) | Should Be $null
+            Compare-Object -ReferenceObject (Get-Timezone -UTCOffset '02:00', '03:00') -DifferenceObject (Get-Timezone -All | Where-Object UTCOffset -Match "\+0[2-3]\:00") | Should Be $null
+        }
+    }
+
     Context 'Match Parametersets' {
         It 'Checks timezones returned via -UTCOffset can be matched to timezone objects' {
             $timezones = Get-Timezone -All
@@ -87,6 +94,7 @@ Describe 'Get-Timezone' {
             { Get-Timezone -Timezone 'My First Timezone' } | Should Throw
             { Get-Timezone -Timezone 0 } | Should Throw
             { Get-Timezone -Timezone 19:00 } | Should Throw
+            { Get-Timezone -UTCOffset 'Another Timezone' } | Should Throw
         }
     }
 }

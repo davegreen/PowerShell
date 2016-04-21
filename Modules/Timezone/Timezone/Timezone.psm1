@@ -70,7 +70,7 @@ Function Get-Timezone {
             $_ -match '^[+-]?[0-9]{2}:[0-9]{2}$'
         })]
 
-        [string]$UTCOffset,
+        [string[]]$UTCOffset,
 
         [parameter(
             Position = 3,
@@ -129,8 +129,12 @@ Function Get-Timezone {
                             Write-Output '+00:00'
                         }
 
-                        { $_ -match '^[0-9]*' } {
+                        { $_ -match '^[0-9]' } {
                             Write-Output "+$Offset"
+                        }
+
+                        default {
+                            Write-Output $Offset
                         }
                     }
 
