@@ -31,9 +31,22 @@ A ```psake``` script has been created to manage the various operations related t
 .\Build.ps1 -Task Analyze
 ```
 
-* Deploy the script to the current user's module folder via PSDeploy  
+* Deploy the script to the current user's module folder 
 ```powershell
 .\Build.ps1 -Task Deploy
+```
+Alternatively, you can deploy to a custom path 
+```powershell
+.\Build.ps1 -Task Deploy -parameters @{ DeployDir = 'C:\My\Custom\Module\Folder' }
+```
+
+* The script can also be signed before deployment, using the first code signing certificate it can find in the current user certificate store
+```powershell
+.\Build.ps1 -Task DeploySigned
+```
+Again, you can specify a specific code signing certificate from the current user certificate store
+```powershell
+.\Build.ps1 -Task DeploySigned @{ CertThumbprint = '01A23BC456D7E8FA90B1C2DE3456FA7890BC1234' }
 ```
 
 ## Contact
@@ -43,3 +56,5 @@ For help, feedback, suggestions or bugfixes please check out [http://tookitaway.
 [Brandon Olin](https://devblackops.io) - For his excellent deployment pipeline example, which you can see in use here!.
 
 [Rohn Edwards](https://rohnspowershellblog.wordpress.com) - For his session on advanced parameter completion at the PowerShell Global Summit.
+
+[Keith Hill](https://rkeithhill.wordpress.com/) - Build script magic from [Plaster](https://github.com/PowerShell/Plaster).

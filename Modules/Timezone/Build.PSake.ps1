@@ -47,9 +47,18 @@ Task Test -depends Setup {
 
 Task Sign -depends BuildManifest {
     if (Get-ChildItem -Path Cert:\CurrentUser\My -CodeSigningCert) {
-        $Authenticode   = @{
-            FilePath    = @(Get-ChildItem -Path "$BuildLocation\*" -Include '*.ps1', '*.psm1')
-            Certificate = @(Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert)[0]
+        if ($CertThumbprint) {
+            $Authenticode   = @{
+                FilePath    = @(Get-ChildItem -Path "$BuildLocation\*" -Include '*.ps1', '*.psm1')
+                Certificate = @(Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert | Where-Object { $_.Thumbprint -eq $CertThumbprint })
+            }
+        }
+
+        else {
+            $Authenticode   = @{
+                FilePath    = @(Get-ChildItem -Path "$BuildLocation\*" -Include '*.ps1', '*.psm1')
+                Certificate = @(Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert)[0]
+            }    
         }
 
         Write-Output -InputObject $Authenticode.FilePath | Out-Default
