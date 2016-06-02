@@ -119,7 +119,7 @@ Function Get-Timezone {
             'ByOffset' {
                 foreach ($Offset in $UTCOffset) {
                     $OffsetOutput = switch ($Offset) {
-                        { $_ -match '^[+-]?00:00'} {
+                        { $_ -match '^[+-]00:00'} {
                             Write-Output '+00:00'
                         }
 
