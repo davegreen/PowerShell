@@ -5,12 +5,10 @@ Param(
     [System.Collections.Hashtable]$Parameters
 )
 
-if (!(Get-Module -Name Pester -ListAvailable)) {
-    Install-Module -Name Pester -Scope CurrentUser
-}
-
-if (!(Get-Module -Name psake -ListAvailable)) {
-    Install-Module -Name psake -Scope CurrentUser
+'Pester', 'psake' | Foreach-Object { 
+    if (!(Get-Module -Name $_ -ListAvailable)) {
+        Install-Module -Name $_ -Scope CurrentUser
+    }
 }
 
 if ($Parameters) {
