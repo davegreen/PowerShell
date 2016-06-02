@@ -6,10 +6,10 @@ Properties {
     # Name of the repository you wish to publish to. Default repo is the PSGallery.
     $PublishRepository = $null
 
-    # Leave $NuGetApiKey as $null and the first time you publish you will be prompted
-    # to enter your API key.  The build will store the key encrypted in a file, so
-    # that on subsequent publishes you will no longer be prompted for the API key.
-    $NuGetApiKey = $null
+    # If you do not specify the NuGetApiKey as a build parameter, the first time
+    # you publish you will be prompted to enter your API key. The build will store
+    # the key encrypted in a file, so that on subsequent publishes you will no
+    # longer be prompted for the API key.
     $EncryptedApiKeyPath = "$env:LOCALAPPDATA\WindowsPowerShell\NuGetApiKey.clixml"
 }
 
@@ -76,15 +76,17 @@ Task Deploy -depends BuildManifest, Analyze, Test {
 Task DeploySigned -depends Sign, Analyze, Test, Deploy {}
 
 Task Publish -depends BuildManifest, Analyze, Test -requiredVariables $EncryptedApiKeyPath {
-    if (Test-Path -LiteralPath $EncryptedApiKeyPath) {
-        $NuGetApiKey = LoadAndUnencryptNuGetApiKey $EncryptedApiKeyPath
-        Write-Output "Using stored NuGetApiKey from $EncryptedApiKeyPath"
-    }
+    if ($NuGetApiKey -eq $null) {
+        if (Test-Path -LiteralPath $EncryptedApiKeyPath) {
+            $NuGetApiKey = LoadAndUnencryptNuGetApiKey $EncryptedApiKeyPath
+            Write-Output "Using stored NuGetApiKey from $EncryptedApiKeyPath"
+        }
 
-    else {
-        $cred = PromptUserForNuGetApiKeyCredential -DestinationPath $EncryptedApiKeyPath
-        $NuGetApiKey = $cred.GetNetworkCredential().Password
-        Write-Output "The NuGetApiKey has been stored in $EncryptedApiKeyPath"
+        else {
+            $cred = PromptUserForNuGetApiKeyCredential -DestinationPath $EncryptedApiKeyPath
+            $NuGetApiKey = $cred.GetNetworkCredential().Password
+            Write-Output "The NuGetApiKey has been stored in $EncryptedApiKeyPath"
+        }
     }
 
     $publishParams = @{
@@ -119,27 +121,14 @@ Task StoreKey -requiredVariables EncryptedApiKeyPath {
 }
 
 Task ShowKey -requiredVariables EncryptedApiKeyPath {
-    if ($NuGetApiKey) {
-        "The embedded (partial) NuGetApiKey is: $($NuGetApiKey[0..7])"
-    }
-
-    else {
-        $NuGetApiKey = LoadAndUnencryptNuGetApiKey -Path $EncryptedApiKeyPath
-        "The stored (partial) NuGetApiKey is: $($NuGetApiKey[0..7])"
-    }
-
+    $NuGetApiKey = LoadAndUnencryptNuGetApiKey -Path $EncryptedApiKeyPath
+    Write-Output "The stored (partial) NuGetApiKey is: $($NuGetApiKey[0..7])"
     Write-Output 'To see the full key, use the task "ShowFullKey"'
 }
 
 Task ShowFullKey -requiredVariables EncryptedApiKeyPath {
-    if ($NuGetApiKey) {
-        "The embedded NuGetApiKey is: $NuGetApiKey"
-    }
-
-    else {
-        $NuGetApiKey = LoadAndUnencryptNuGetApiKey -Path $EncryptedApiKeyPath
-        "The stored NuGetApiKey is: $NuGetApiKey"
-    }
+    $NuGetApiKey = LoadAndUnencryptNuGetApiKey -Path $EncryptedApiKeyPath
+    "The stored NuGetApiKey is: $NuGetApiKey"
 }
 
 Task ? -description 'List the available tasks' {
@@ -199,6 +188,7 @@ Function EncryptAndSaveNuGetApiKey {
     if (!(Test-Path -LiteralPath $parentDir)) {
         $null = New-Item -Path $parentDir -ItemType Directory
     }
+
     elseif (Test-Path -LiteralPath $Path) {
         Remove-Item -LiteralPath $Path
     }
