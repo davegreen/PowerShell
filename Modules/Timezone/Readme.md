@@ -2,15 +2,35 @@
 An example of using the Release Pipeline Model with a PowerShell module
 
 ## Usage
-The timezone module has three functions: ```Get-Timezone``` and ```Set-Timezone```. ```Get-Timezone``` and ```Get-TimezoneFromOffset``` both return a PSObject representing a timezone:
+The timezone module has three functions: ```Get-Timezone``` and ```Set-Timezone```. ```Get-Timezone``` returns a PSObject representing a timezone:
 
-```
+```powershell
+Get-Timezone
+
 ExampleLocation                         UTCOffset Timezone
 ---------------                         --------- --------
-(UTC) Casablanca                        +00:00    Morocco Standard Time
-(UTC) Coordinated Universal Time        +00:00    UTC
 (UTC) Dublin, Edinburgh, Lisbon, London +00:00    GMT Standard Time
-(UTC) Monrovia, Reykjavik               +00:00    Greenwich Standard Time
+```
+
+It's also possible to get timezones for a particular offset:
+
+```powershell
+Get-Timezone -UTCOffset 01:00
+
+ExampleLocation                                               UTCOffset Timezone
+---------------                                               --------- --------
+(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna  +01:00    W. Europe Standard Time
+(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague +01:00    Central Europe Standard Time
+(UTC+01:00) Brussels, Copenhagen, Madrid, Paris               +01:00    Romance Standard Time
+(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb                  +01:00    Central European Standard Time
+(UTC+01:00) West Central Africa                               +01:00    W. Central Africa Standard Time
+(UTC+01:00) Windhoek                                          +01:00    Namibia Standard Time
+```
+
+Timezone objects can then be passed into Set-Timezone if required, or the timezone can be specified by the timezone name (tab completion is available for this):
+
+```powershell
+Set-Timezone -Timezone 'Alaskan Standard Time'
 ```
 
 ### Build Operations
