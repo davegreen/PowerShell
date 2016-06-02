@@ -52,14 +52,16 @@ Task Sign -depends BuildManifest {
             Certificate = @(Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert)[0]
         }
 
+        Write-Output -InputObject $Authenticode.FilePath | Out-Default
+        Write-Output -InputObject $Authenticode.Certificate | Out-Default
         $SignResult = Set-AuthenticodeSignature @Authenticode -Verbose:$VerbosePreference
         if ($SignResult.Status -ne 'Valid') {
-            throw 'Signing one or more scripts failed.'
+            throw "Signing one or more scripts failed."
         }
     }
 
     else {
-        throw 'No code signing certificates available.'
+        throw "Signing failed. No code signing certificate found."
     }
 }
 
@@ -70,6 +72,8 @@ Task Deploy -depends BuildManifest, Analyze, Test {
 
     Copy-Item -Path "$BuildLocation\*" -Destination $DeployDir -Verbose:$VerbosePreference -Force
 }
+
+Task DeploySigned -depends Sign, Analyze, Test, Deploy {}
 
 Task Publish -depends BuildManifest, Analyze, Test -requiredVariables $EncryptedApiKeyPath {
     if (Test-Path -LiteralPath $EncryptedApiKeyPath) {
@@ -94,6 +98,8 @@ Task Publish -depends BuildManifest, Analyze, Test -requiredVariables $Encrypted
 
     Publish-Module @publishParams -WhatIf
 }
+
+Task PublishSigned -depends Sign, Analyze, Test, Publish {}
 
 Task Clean {
     if (Test-Path -Path $BuildLocation) {
