@@ -110,7 +110,7 @@ Task Publish -depends BuildManifest, Analyze, Test -requiredVariables $Encrypted
         $publishParams['Repository'] = $PublishRepository
     }
 
-    Publish-Module @publishParams -WhatIf
+    Publish-Module @publishParams
 }
 
 Task PublishSigned -depends Sign, Analyze, Test, Publish {}
