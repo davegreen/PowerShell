@@ -1,7 +1,10 @@
 [CmdletBinding()]
 
 Param(
+    [Parameter()]
     [string[]]$Task = 'default',
+    
+    [Parameter()]
     [System.Collections.Hashtable]$Parameters
 )
 
