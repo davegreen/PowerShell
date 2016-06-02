@@ -202,7 +202,6 @@ Function Set-Timezone {
 
 Register-ArgumentCompleter -CommandName Get-Timezone, Set-Timezone -ParameterName Timezone -ScriptBlock {
     #This is the argument completer to return available timezone parameters for use with getting and setting the timezone.
-
     Param(
         $commandName,        #The command calling this arguement completer.
         $parameterName,      #The parameter currently active for the argument completer.
