@@ -76,17 +76,20 @@ Task Deploy -depends BuildManifest, Analyze, Test {
 Task DeploySigned -depends Sign, Analyze, Test, Deploy {}
 
 Task Publish -depends BuildManifest, Analyze, Test -requiredVariables $EncryptedApiKeyPath {
-    if ($NuGetApiKey -eq $null) {
-        if (Test-Path -LiteralPath $EncryptedApiKeyPath) {
-            $NuGetApiKey = LoadAndUnencryptNuGetApiKey $EncryptedApiKeyPath
-            Write-Output "Using stored NuGetApiKey from $EncryptedApiKeyPath"
-        }
+    if ($NuGetApiKey) {
+        EncryptAndSaveNuGetApiKey -NuGetApiKey $NuGetApiKey -Path $EncryptedApiKeyPath
+        Write-Output "The new NuGetApiKey has been stored in $EncryptedApiKeyPath"
+    }
 
-        else {
-            $cred = PromptUserForNuGetApiKeyCredential -DestinationPath $EncryptedApiKeyPath
-            $NuGetApiKey = $cred.GetNetworkCredential().Password
-            Write-Output "The NuGetApiKey has been stored in $EncryptedApiKeyPath"
-        }
+    elseif ($NuGetApiKey -eq $null -and (Test-Path -LiteralPath $EncryptedApiKeyPath)) {
+        $NuGetApiKey = LoadAndUnencryptNuGetApiKey $EncryptedApiKeyPath
+        Write-Output "Using stored NuGetApiKey from $EncryptedApiKeyPath"
+    }
+
+    elseif ($NuGetApiKey -eq $null) {
+        $cred = PromptUserForNuGetApiKeyCredential -DestinationPath $EncryptedApiKeyPath
+        $NuGetApiKey = $cred.GetNetworkCredential().Password
+        Write-Output "The NuGetApiKey has been stored in $EncryptedApiKeyPath"
     }
 
     $publishParams = @{
