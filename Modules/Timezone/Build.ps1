@@ -8,7 +8,7 @@ Param(
     [System.Collections.Hashtable]$Parameters
 )
 
-'Pester', 'psake' | Foreach-Object { 
+'Pester', 'psake', 'PsScriptAnalyzer' | Foreach-Object { 
     if (!(Get-Module -Name $_ -ListAvailable)) {
         Install-Module -Name $_ -Scope CurrentUser
     }
