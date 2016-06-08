@@ -3,6 +3,8 @@ A PowerShell module designed to make it easier to Get and set the timezone from 
 
 This module also serves as my example of using the Release Pipeline Model with a PowerShell module.
 
+Current test status [![Build status](https://ci.appveyor.com/api/projects/status/24cmkti8m8j6sahg?svg=true)](https://ci.appveyor.com/project/davegreen/powershell)
+
 ## Usage
 The timezone module has three functions: ```Get-Timezone``` and ```Set-Timezone```. ```Get-Timezone``` returns a PSObject representing a timezone:
 
