@@ -1,5 +1,7 @@
 ## Overview
-An example of using the Release Pipeline Model with a PowerShell module
+A PowerShell module designed to make it easier to Get and set the timezone from PowerShell.
+
+This module also serves as my example of using the Release Pipeline Model with a PowerShell module.
 
 ## Usage
 The timezone module has three functions: ```Get-Timezone``` and ```Set-Timezone```. ```Get-Timezone``` returns a PSObject representing a timezone:
