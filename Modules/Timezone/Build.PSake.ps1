@@ -96,7 +96,7 @@ Task Publish -depends BuildManifest, Analyze, Test -requiredVariables $Encrypted
     }
 
     elseif ($NuGetApiKey -eq $null) {
-        $cred = PromptUserForNuGetApiKeyCredential -DestinationPath $EncryptedApiKeyPath
+        $cred        = PromptUserForNuGetApiKeyCredential -DestinationPath $EncryptedApiKeyPath
         $NuGetApiKey = $cred.GetNetworkCredential().Password
         Write-Output "The NuGetApiKey has been stored in $EncryptedApiKeyPath"
     }
@@ -172,15 +172,15 @@ Function EncryptAndSaveNuGetApiKey {
     [Diagnostics.CodeAnalysis.SuppressMessage('PSProvideDefaultParameterValue', '')]
     Param(
         [Parameter(
-            Mandatory = $True,
-            ParameterSetName='SecureString'
+            Mandatory        = $True,
+            ParameterSetName ='SecureString'
         )]
         [ValidateNotNull()]
         [SecureString]$NuGetApiKeySecureString,
 
         [Parameter(
-            Mandatory = $True,
-            ParameterSetName='PlainText'
+            Mandatory        = $True,
+            ParameterSetName ='PlainText'
         )]
         [ValidateNotNullOrEmpty()]
         [string]$NuGetApiKey,
@@ -220,7 +220,7 @@ Function LoadAndUnencryptNuGetApiKey {
     )
 
     $storedKey = Import-Clixml $Path | ConvertTo-SecureString
-    $cred = New-Object -TypeName PSCredential -ArgumentList 'jpgr', $storedKey
+    $cred      = New-Object -TypeName PSCredential -ArgumentList 'jpgr', $storedKey
     $cred.GetNetworkCredential().Password
     Write-Verbose -Message "The NuGetApiKey has been loaded and unencrypted from $Path"
 }

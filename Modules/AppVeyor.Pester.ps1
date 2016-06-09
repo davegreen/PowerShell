@@ -39,7 +39,7 @@ else {
     #Upload results for test page
     Get-ChildItem -Path "$ProjectRoot\TestResultsPS*.xml" | Foreach-Object {
         $Address = "https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)"
-        $Source = $_.FullName
+        $Source  = $_.FullName
 
         "UPLOADING FILES: $Address $Source"
 
@@ -47,8 +47,7 @@ else {
     }
 
     #What failed?
-    $Results = @( Get-ChildItem -Path "$ProjectRoot\*PesterResults*.xml" | Import-Clixml )
-        
+    $Results     = @( Get-ChildItem -Path "$ProjectRoot\*PesterResults*.xml" | Import-Clixml )
     $FailedCount = $Results | Select -ExpandProperty FailedCount | Measure-Object -Sum | Select -ExpandProperty Sum
 
     if ($FailedCount -gt 0) {
@@ -59,9 +58,9 @@ else {
             $Test = $_
             [pscustomobject]@{
                 Describe = $Test.Describe
-                Context = $Test.Context
-                Name = "It $($Test.Name)"
-                Result = $Test.Result
+                Context  = $Test.Context
+                Name     = "It $($Test.Name)"
+                Result   = $Test.Result
             }   
         } | Sort Describe, Context, Name, Result | Format-List
         throw "$FailedCount tests failed."
