@@ -6,7 +6,7 @@ This module also serves as my example of using the Release Pipeline Model with a
 Current test status [![Build status](https://ci.appveyor.com/api/projects/status/24cmkti8m8j6sahg?svg=true)](https://ci.appveyor.com/project/davegreen/powershell)
 
 ## Usage
-The timezone module has three functions: ```Get-Timezone``` and ```Set-Timezone```. ```Get-Timezone``` returns a PSObject representing a timezone:
+The timezone module has two functions: ```Get-Timezone``` and ```Set-Timezone```. ```Get-Timezone``` returns one or more PSObjects that represent a timezone:
 
 ```powershell
 Get-Timezone
@@ -45,17 +45,17 @@ A ```psake``` script has been created to manage the various operations related t
 .\Build.ps1
 ```
 
-* Test the script with Pester  
-```powershell
-.\Build.ps1 -Task Test
-```
-
-* Test the script with Script Analyzer only  
+* Test the script with Script Analyzer
 ```powershell
 .\Build.ps1 -Task Analyze
 ```
 
-* Deploy the script to the current user's module folder 
+* Analyze, then test the script with Pester
+```powershell
+.\Build.ps1 -Task Test
+```
+
+* Analyze, test, then deploy the script to the current user's module folder
 ```powershell
 .\Build.ps1 -Task Deploy
 ```
