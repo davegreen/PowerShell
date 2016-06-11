@@ -4,13 +4,16 @@ Function Get-Timezone {
       A function that retrieves valid computer timezones.
 
       .Description
-      This function is a wrapper around tzutil.exe, aiming to make getting timezones slightly easier.
+      This function is a wrapper around tzutil.exe, 
+      aiming to make getting timezones slightly easier.
 
       .Parameter Timezone
-      Specify the timezone that you wish to retrieve data for. Not specifying this parameter will return the current timezone.
+      Specify the timezone that you wish to retrieve data for. 
+      Not specifying this parameter will return the current timezone.
 
       .Parameter UTCOffset
-      Specify the offset from UTC to return timezones for, using the format NN:NN (implicitly positive), -NN:NN or +NN:NN.
+      Specify the offset from UTC to return timezones for, 
+      using the format NN:NN (implicitly positive), -NN:NN or +NN:NN.
 
       .Parameter All
       Return all timezones supported by tzutil available on the system.
@@ -148,7 +151,8 @@ Function Set-Timezone {
       This function is a wrapper around tzutil.exe, aiming to make setting timezones slightly easier.
 
       .Parameter Timezone
-      A string containing the display name of the timezone you require. Only valid timezones (from 'Get-Timezone -All', or 'tzutil /l') are supported.
+      A string containing the display name of the timezone you require. 
+      Only valid timezones (from 'Get-Timezone -All', or 'tzutil /l') are supported.
 
       .Parameter WhatIf
       If Whatif is specified, the user is notified about the timezone that would be set.
@@ -193,7 +197,8 @@ Function Set-Timezone {
 }
 
 Register-ArgumentCompleter -CommandName Get-Timezone, Set-Timezone -ParameterName Timezone -ScriptBlock {
-    #This is the argument completer to return available timezone parameters for use with getting and setting the timezone.
+    # This is the argument completer to return available timezone
+    # parameters for use with getting and setting the timezone.
     Param(
         $commandName,        #The command calling this arguement completer.
         $parameterName,      #The parameter currently active for the argument completer.
@@ -211,7 +216,7 @@ Register-ArgumentCompleter -CommandName Get-Timezone, Set-Timezone -ParameterNam
         
         New-Object System.Management.Automation.CompletionResult (
             $CompletionText,                     #Completion text that will show up on the command line.
-            "$($_.Timezone) ($($_.UTCOffset))" , #List item text that will show up in intellisense.
+            "$($_.Timezone) ($($_.UTCOffset))",  #List item text that will show up in intellisense.
             'ParameterValue',                    #The type of the completion result.
             "$($_.Timezone) ($($_.UTCOffset))"   #The tooltip info that will show up additionally in intellisense.
         )
