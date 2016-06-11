@@ -12,8 +12,6 @@
 	To test any module from any path, use https://github.com/juneb/PesterTDD/Module.Help.Tests.ps1
 #>
 
-#Requires -Module @{ModuleName = 'Pester'; ModuleVersion = '3.4.0'}
-
 <#
 .SYNOPSIS
 Gets command parameters; one per name. Prefers default parameter set.
@@ -60,8 +58,9 @@ This command uses a Microsoft.PowerShell.Commands.ModuleSpecification object to
 specify the module and version. You can also use it to specify the module GUID.
 Then, it pipes the CommandInfo object to Get-ParametersDefaultFirst.
 #>
-function Get-ParametersDefaultFirst {
-	Param
+function Get-ParametersDefaultFirst
+{
+	param
 	(
 		[Parameter(Mandatory = $true,
 				   ValueFromPipeline = $true)]
@@ -69,26 +68,32 @@ function Get-ParametersDefaultFirst {
 		$Command
 	)
 	
-	BEGIN {
+	BEGIN
+	{
 		$Common = 'Debug', 'ErrorAction', 'ErrorVariable', 'InformationAction', 'InformationVariable', 'OutBuffer', 'OutVariable', 'PipelineVariable', 'Verbose', 'WarningAction', 'WarningVariable'
 		$parameters = @()
 	}
-	PROCESS {
-		if ($defaultPSetName = $Command.DefaultParameterSet) {
+	PROCESS
+	{
+		if ($defaultPSetName = $Command.DefaultParameterSet)
+		{
 			$defaultParameters = ($Command.ParameterSets | Where-Object Name -eq $defaultPSetName).parameters | Where-Object Name -NotIn $common
 			$otherParameters = ($Command.ParameterSets | Where-Object Name -ne $defaultPSetName).parameters | Where-Object Name -NotIn $common
 			
 			$parameters += $defaultParameters
-			if ($parameters -and $otherParameters) {
+			if ($parameters -and $otherParameters)
+			{
 				$otherParameters | ForEach-Object {
-					if ($_.Name -notin $parameters.Name) {
+					if ($_.Name -notin $parameters.Name)
+					{
 						$parameters += $_
 					}
 				}
 				$parameters = $parameters | Sort-Object Name
 			}
 		}
-		else {
+		else
+		{
 			$parameters = $Command.ParameterSets.Parameters | Where-Object Name -NotIn $common | Sort-Object Name -Unique
 		}
 		
@@ -98,60 +103,15 @@ function Get-ParametersDefaultFirst {
 	END { }
 }
 
-<#
-.SYNOPSIS
-Gets the module/snapin name and version for a command.
-
-.DESCRIPTION
-This function takes a CommandInfo object (the type that
-Get-Command returns) and retuns a custom object with the
-following properties:
-
-    -- [string] $CommandName
-	-- [string] $ModuleName (or PSSnapin name)
-	-- [string] $ModuleVersion (or PowerShell Version)
-    
-.PARAMETER CommandInfo
-Specifies a Commandinfo object, e.g. (Get-Command Get-Item).
-
-.EXAMPLE
-PS C:\> Get-CommandVersion -CommandInfo (Get-Command Get-Help)
-
-CommandName ModuleName                Version
------------ ----------                -------
-Get-Help    Microsoft.PowerShell.Core 3.0.0.0
-
-This command gets information about a cmdlet in a PSSnapin.
-
-
-.EXAMPLE
-PS C:\> Get-CommandVersion -CommandInfo (Get-Command New-JobTrigger)
-
-CommandName    ModuleName     Version
------------    ----------     -------
-New-JobTrigger PSScheduledJob 1.1.0.0
-
-This command gets information about a cmdlet in a module.
-#>
-function Get-CommandVersion {
-	Param
-	(
-		[Parameter(Mandatory = $true)]
-		[System.Management.Automation.CommandInfo]
-		$CommandInfo
-	)
-	
-	if ((-not ((($commandModuleName = $CommandInfo.Module.Name) -and ($commandVersion = $CommandInfo.Module.Version)) -or
-	(($commandModuleName = $CommandInfo.PSSnapin) -and ($commandVersion = $CommandInfo.PSSnapin.Version))))) {
-		Write-Error "For $($CommandInfo.Name) :  Can't find PSSnapin/module name and version"
-	}
-	else {
-		# "For $commandName : Module is $commandModuleName. Version is $commandVersion"
-		[PSCustomObject]@{ CommandName = $CommandInfo.Name; ModuleName = $commandModuleName; Version = $commandVersion }
-	}
-}
 
 $ModuleBase = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+# For tests in .\Tests subdirectory
+if ((Split-Path $ModuleBase -Leaf) -eq 'Tests')
+{
+	$ModuleBase = Split-Path $ModuleBase -Parent
+}
+
 
 # Handles modules in version directories
 $leaf = Split-Path $ModuleBase -Leaf
@@ -171,26 +131,21 @@ Get-Module $ModuleName | Remove-Module
 
 # Because ModuleBase includes version number, this imports the required version
 # of the module
-$Module = Import-Module $ModuleBase\$ModuleName.psm1 -PassThru -ErrorAction Stop
+$Module = Import-Module $ModuleBase\$ModuleName.psd1 -PassThru -ErrorAction Stop
 $commands = Get-Command -Module $module -CommandType Cmdlet, Function, Workflow  # Not alias
 
 
 ## When testing help, remember that help is cached at the beginning of each session.
 ## To test, restart session.
 
-foreach ($command in $commands) {
+foreach ($command in $commands)
+{
 	$commandName = $command.Name
-	
-	# Get the module name and version of the command. Used in the Describe name.
-	$commandModuleVersion = Get-CommandVersion -CommandInfo $command
 	
 	# The module-qualified command fails on Microsoft.PowerShell.Archive cmdlets
 	$Help = Get-Help $ModuleName\$commandName -ErrorAction SilentlyContinue
-	if ($Help.Synopsis -like '*`[`<CommonParameters`>`]*') {
-		$Help = Get-Help $commandName -ErrorAction SilentlyContinue
-	}
 	
-	Describe "Test help for $commandName in $($commandModuleVersion.ModuleName) ($($commandModuleVersion.Version))" {
+	Describe "Test help for $commandName" {
 		
 		# If help is not found, synopsis in auto-generated help is the syntax diagram
 		It "should not be auto-generated" {
@@ -229,7 +184,8 @@ foreach ($command in $commands) {
 			$parameterNames = $parameters.Name
 			$HelpParameterNames = $Help.Parameters.Parameter.Name | Sort-Object -Unique
 			
-			foreach ($parameter in $parameters) {
+			foreach ($parameter in $parameters)
+			{
 				$parameterName = $parameter.Name
 				$parameterHelp = $Help.parameters.parameter | Where-Object Name -EQ $parameterName
 				
@@ -249,11 +205,12 @@ foreach ($command in $commands) {
 					$codeType = $parameter.ParameterType.Name
 					# To avoid calling Trim method on a null object.
 					$helpType = if ($parameterHelp.parameterValue) { $parameterHelp.parameterValue.Trim() }
-					$helpType | Should be $codeType 
+					$helpType | Should be $codeType
 				}
 			}
 			
-			foreach ($helpParm in $HelpParameterNames) {
+			foreach ($helpParm in $HelpParameterNames)
+			{
 				# Shouldn't find extra parameters in help.
 				It "finds help parameter in code: $helpParm" {
 					$helpParm -in $parameterNames | Should Be $true
