@@ -27,7 +27,7 @@ Task Setup -depends BuildManifest {
         New-Item -Path $BuildLocation -ItemType Directory -Verbose:$VerbosePreference | Out-Null
     }
 
-    Copy-Item -Path "$PSScriptRoot\$ModuleName\*" -Destination $BuildLocation -Exclude 'Build-Manifest.ps1' -Verbose:$VerbosePreference
+    Copy-Item -Path "$PSScriptRoot\$ModuleName\*" -Destination $BuildLocation -Recurse -Force -Exclude 'Build-Manifest.ps1' -Verbose:$VerbosePreference
 }
 
 Task BuildManifest {

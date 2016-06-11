@@ -4,7 +4,14 @@ if ((Get-Module).Name -contains 'Timezone') {
     Remove-Module -Name Timezone
 }
 
-Import-Module "$PSScriptRoot\Timezone.psm1"
+Import-Module "$PSScriptRoot\..\Timezone.psm1"
+
+Describe 'Module Manifest Tests' {
+    It 'Passes Test-ModuleManifest' {
+        Test-ModuleManifest -Path "$PSScriptRoot\..\Timezone.psd1"
+        $? | Should Be $true
+    }
+}
 
 InModuleScope Timezone {
     Describe 'Get-Timezone' {
