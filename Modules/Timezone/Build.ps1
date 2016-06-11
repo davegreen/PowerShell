@@ -14,10 +14,14 @@ Param(
     }
 }
 
-if ($Parameters) {
-    Invoke-psake -buildFile "$PSScriptRoot\Build.PSake.ps1" -taskList $Task, Clean -parameters $Parameters -Verbose:$VerbosePreference
+$psake = @{
+    buildFile  = "$PSScriptRoot\Build.PSake.ps1"
+    taskList   = $Task + 'Clean'
+    Verbose    = $VerbosePreference
 }
 
-else {
-    Invoke-psake -buildFile "$PSScriptRoot\Build.PSake.ps1" -taskList $Task, Clean -Verbose:$VerbosePreference
+if ($Parameters) {
+    $psake.parameters = $Parameters
 }
+
+Invoke-psake @psake
