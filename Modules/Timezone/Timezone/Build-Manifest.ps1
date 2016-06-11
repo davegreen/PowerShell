@@ -7,27 +7,17 @@
 #>
 
 $ModuleBase = Split-Path -Parent $MyInvocation.MyCommand.Path
-
-# Handles modules in version directories
-$leaf          = Split-Path $ModuleBase -Leaf
-$parent        = Split-Path $ModuleBase -Parent
-$parsedVersion = $null
-
-if ([System.Version]::TryParse($leaf, [ref]$parsedVersion)) {
-	$ModuleName = Split-Path $parent -Leaf
-}
-
-else {
-	$ModuleName = $leaf
-}
+$ModuleName = Split-Path $ModuleBase -Leaf
 
 # Removes all versions of the module from the session before importing
 Get-Module $ModuleName | Remove-Module
 
-# Because ModuleBase includes version number, this imports the required version
-# of the module
 $Module   = Import-Module $ModuleBase\$ModuleName.psm1 -PassThru -ErrorAction Stop
 $commands = Get-Command -Module $Module
+$FileList = ((Get-ChildItem -File -Path $PSScriptRoot).Name | Where-Object { $_ -ne 'Build-Manifest.ps1' })
+$FileList += foreach ($Directory in (Get-ChildItem -Directory -Path $PSScriptRoot).Name) {
+    ((Get-ChildItem -File -Path $PSScriptRoot\$Directory).Name) | ForEach-Object { Write-Output "$Directory\$_" }
+}
 
 $ModuleDescription = @{
     Path              = "$PSScriptRoot\$ModuleName.psd1"
@@ -38,7 +28,7 @@ $ModuleDescription = @{
     Copyright         = '(c) 2016 David Green. All rights reserved.'
     PowerShellVersion = '5.0'
     ModuleVersion     = '1.2.2'
-    FileList          = ((Get-ChildItem -Recurse -File -Path $PSScriptRoot).Name | Where-Object { $_ -ne 'Build-Manifest.ps1' })
+    FileList          = $FileList
     FunctionsToExport = $commands.Name
     CmdletsToExport   = $commands.Name
     VariablesToExport = $null
