@@ -27,11 +27,11 @@ $ModuleDescription = @{
     CompanyName       = 'http://tookitaway.co.uk/, https://github.com/davegreen/PowerShell/'
     Copyright         = '(c) 2016 David Green. All rights reserved.'
     PowerShellVersion = '5.0'
-    ModuleVersion     = '1.2.2'
+    ModuleVersion     = '1.2.3'
     FileList          = $FileList
     FunctionsToExport = $commands.Name
     CmdletsToExport   = $commands.Name
-    VariablesToExport = $null
+    # VariablesToExport = ''
     AliasesToExport   = $commands.Name
     Tags              = @($ModuleName, 'tzutil')
     LicenseUri        = 'https://github.com/davegreen/PowerShell/blob/master/LICENSE'
@@ -40,4 +40,10 @@ $ModuleDescription = @{
     # ReleaseNotes    = ''
 }
 
-New-ModuleManifest @ModuleDescription
+if (Test-Path -Path $ModuleDescription.Path) {
+    Update-ModuleManifest @ModuleDescription
+}
+
+else {
+    New-ModuleManifest @ModuleDescription
+}
