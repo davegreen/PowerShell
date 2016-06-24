@@ -52,6 +52,23 @@ Task Test -depends Setup {
 }
 
 Task Sign -depends Analyze, Test {
+    if ($CertPfxPath) {
+        if ((Test-Path -Path $CertPfxPath) -and -not $CertPfxPassword) {
+            $CertPfxPassword = (PromptUserForKeyCredential).Password
+        }
+
+        if ((Test-Path -Path $CertPfxPath) -and $CertPfxPassword) {
+            $CertImport = @{
+                CertStoreLocation = 'Cert:\CurrentUser\My'
+                FilePath          = $CertPfxPath
+                Password          = $CertPfxPassword
+                ErrorAction       = 'Stop'
+            }
+
+            $CertThumbprint = (Import-PfxCertificate @CertImport -Verbose:$VerbosePreference).Thumbprint
+        }
+    }
+
     if ($CertThumbprint) {
         EncryptAndSaveString -String $CertThumbprint -Path $CertThumbprintPath
         Write-Output "The new thumbprint has been stored in $CertThumbprintPath"
@@ -123,7 +140,7 @@ Task Publish -depends Setup, Analyze, Test -requiredVariables $EncryptedApiKeyPa
     }
 
     elseif ($NuGetApiKey -eq $null) {
-        $cred = PromptUserForNuGetApiKeyCredential -DestinationPath $EncryptedApiKeyPath
+        $cred = PromptUserForKeyCredential -DestinationPath $EncryptedApiKeyPath
         $NuGetApiKey = $cred.GetNetworkCredential().Password
         Write-Output "The NuGetApiKey has been stored in $EncryptedApiKeyPath"
     }
@@ -161,7 +178,7 @@ Task RemoveCertThumbprint -requiredVariables CertThumbprintPath {
 }
 
 Task StoreKey -requiredVariables EncryptedApiKeyPath {
-    $nuGetApiKeyCred = PromptUserForNuGetApiKeyCredential -DestinationPath $EncryptedApiKeyPath
+    $nuGetApiKeyCred = PromptUserForKeyCredential -DestinationPath $EncryptedApiKeyPath
     "The NuGetApiKey has been stored in $EncryptedApiKeyPath"
 }
 
@@ -196,7 +213,7 @@ Task ? -description 'List the available tasks' {
 }
 
 # Helper functions
-Function PromptUserForNuGetApiKeyCredential {
+Function PromptUserForKeyCredential {
     [Diagnostics.CodeAnalysis.SuppressMessage('PSProvideDefaultParameterValue', '')]
     Param(
         [Parameter()]
@@ -204,14 +221,14 @@ Function PromptUserForNuGetApiKeyCredential {
         [string]$DestinationPath
     )
 
-    $message = "Enter your NuGet API Key for the gallery in the password field."
-    $nuGetApiKeyCred = Get-Credential -Message $message -UserName "ignored"
+    $message = "Enter your key/password in the password field."
+    $KeyCred = Get-Credential -Message $message -UserName "ignored"
 
     if ($DestinationPath) {
-        EncryptAndSaveString -SecureString $nuGetApiKeyCred.Password -Path $DestinationPath
+        EncryptAndSaveString -SecureString $KeyCred.Password -Path $DestinationPath
     }
 
-    Write-Output $nuGetApiKeyCred
+    Write-Output $KeyCred
 }
 
 Function EncryptAndSaveString {
