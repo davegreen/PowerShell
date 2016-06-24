@@ -122,8 +122,8 @@ Task Deploy -depends Setup, Analyze, Test {
     if (-not (Test-Path -Path $DeployDir)) {
         New-Item -Path $DeployDir -ItemType Directory -Verbose:$VerbosePreference | Out-Null
     }
-
-    Copy-Item -Path "$BuildLocation\*" -Destination $DeployDir -Verbose:$VerbosePreference -Force
+    
+    Copy-Item -Path "$BuildLocation\*" -Destination $DeployDir -Verbose:$VerbosePreference -Recurse -Force
 }
 
 Task DeploySigned -depends Sign, Deploy {}
