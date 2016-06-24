@@ -14,9 +14,10 @@ Properties {
 
     # If you do not specify the certificate thumbprint when specifying a build that
     # includes script signing the build will use the first code signing certificate
-    # it finds in the users personal certificate store. The build will store the
-    # thumbprint encrypted in a file, so that on subsequent signing the build will
-    # use the same certificate.
+    # it finds in the users personal certificate store, unless a path to a PFX file
+    # is specified using the CertPfxPath parameter. The build will import the 
+    # certificate (if required), then store the thumbprint encrypted in a file, so
+    # that on subsequent signing the build will use the same certificate.
     $CertThumbprintPath  = "$env:LOCALAPPDATA\WindowsPowerShell\CertificateThumbprint.clixml"
 }
 
