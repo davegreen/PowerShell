@@ -94,14 +94,14 @@ Task Sign -depends Analyze, Test {
     if (Get-ChildItem -Path Cert:\CurrentUser\My -CodeSigningCert) {
         if ($CertThumbprint) {
             $Authenticode   = @{
-                FilePath    = @(Get-ChildItem -Path "$BuildLocation\*" -Include '*.ps1', '*.psm1')
+                FilePath    = @(Get-ChildItem -Path "$BuildLocation\*" -Recurse -Include '*.ps1', '*.psm1')
                 Certificate = @(Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert | Where-Object { $_.Thumbprint -eq $CertThumbprint })[0]
             }
         }
 
         else {
             $Authenticode   = @{
-                FilePath    = @(Get-ChildItem -Path "$BuildLocation\*" -Include '*.ps1', '*.psm1')
+                FilePath    = @(Get-ChildItem -Path "$BuildLocation\*" -Recurse -Include '*.ps1', '*.psm1')
                 Certificate = @(Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert)[0]
             }
         }
