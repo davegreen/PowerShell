@@ -3,9 +3,6 @@ Properties {
     $BuildLocation = "$($env:TEMP)\$ModuleName"
     $DeployDir     = "$($($env:PSModulePath).Split(';')[0])\$ModuleName"
 
-    # Name of the repository you wish to publish to. Default repo is the PSGallery.
-    $PublishRepository = $null
-
     # If you do not specify the NuGetApiKey as a build parameter, the first time
     # you publish you will be prompted to enter your API key. The build will store
     # the key encrypted in a file, so that on subsequent publishes you will no
@@ -192,7 +189,7 @@ Task RemoveKey -requiredVariables EncryptedApiKeyPath {
 }
 
 Task StoreKey -requiredVariables EncryptedApiKeyPath {
-    $nuGetApiKeyCred = PromptUserForKeyCredential -DestinationPath $EncryptedApiKeyPath
+    PromptUserForKeyCredential -DestinationPath $EncryptedApiKeyPath
     "The NuGetApiKey has been stored in $EncryptedApiKeyPath"
 }
 
