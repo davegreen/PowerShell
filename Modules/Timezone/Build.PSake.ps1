@@ -265,6 +265,7 @@ function PromptUserForKeyCredential {
 
 function AddSecuredSetting {
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessage("PSAvoidUsingConvertToSecureStringWithPlainText", '')]
     Param(
         [Parameter(Mandatory)]
         [string]$Key,
