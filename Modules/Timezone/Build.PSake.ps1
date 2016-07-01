@@ -7,18 +7,17 @@ Properties {
     # you publish you will be prompted to enter your API key. The build will store
     # the key encrypted in a file, so that on subsequent publishes you will no
     # longer be prompted for the API key.
-    $EncryptedApiKeyPath = "$env:LOCALAPPDATA\WindowsPowerShell\NuGetApiKey.clixml"
 
-    # If you specify the certificate subject when running a build that certificate 
-    # must exist in the users personal certificate store. The build will import the 
-    # certificate (if required), then store the subject, so that on subsequent 
+    # If you specify the certificate subject when running a build that certificate
+    # must exist in the users personal certificate store. The build will import the
+    # certificate (if required), then store the subject, so that on subsequent
     # signing the build will use the same (or newer) certificate with that subject.
-    $CertSubjectPath  = "$env:LOCALAPPDATA\WindowsPowerShell\CertificateSubject.clixml"
 
-    # In addition, PFX certificates are supported in an interactive scenario only,
+    # PFX certificates for import are supported in an interactive scenario only,
     # as a way to import a certificate into the user personal store for later use.
     # This can be provided using the CertPfxPath parameter.
     # PFX passwords will not be stored.
+    $SecuredSettingsPath = "$env:LOCALAPPDATA\WindowsPowerShell\SecuredSettings.clixml"
 }
 
 Task default -depends BuildManifest, Setup, Analyze, Test, Clean
@@ -28,7 +27,15 @@ Task Setup -depends BuildManifest {
         New-Item -Path $BuildLocation -ItemType Directory -Verbose:$VerbosePreference | Out-Null
     }
 
-    Copy-Item -Path "$PSScriptRoot\$ModuleName\*" -Destination $BuildLocation -Recurse -Force -Exclude 'Build-Manifest.ps1' -Verbose:$VerbosePreference
+    $Setup = @{
+        Path        = "$PSScriptRoot\$ModuleName\*"
+        Destination = $BuildLocation
+        Recurse     = $true
+        Force       = $true
+        Exclude     = 'Build-Manifest.ps1'
+    }
+
+    Copy-Item @Setup -Verbose:$VerbosePreference
 }
 
 Task BuildManifest {
@@ -36,10 +43,12 @@ Task BuildManifest {
 }
 
 Task Analyze -depends Setup {
-    $analysisResult = Invoke-ScriptAnalyzer -Path $BuildLocation -Severity @('Error', 'Warning') -Recurse -Verbose:$false
+    #$analysisResult = Invoke-ScriptAnalyzer -Path $BuildLocation -Severity @('Error', 'Warning') -Recurse -Verbose:$false
+    $analysisResult = Invoke-ScriptAnalyzer -Path $BuildLocation -Recurse -Verbose:$false
+
     if ($analysisResult) {
         $analysisResult | Format-Table
-        Write-Error -Message 'One or more Script Analyzer errors/warnings where found. Build cannot continue!'
+        Write-Error -Message 'One or more Script Analyzer errors/warnings were found. Build cannot continue!'
     }
 }
 
@@ -52,7 +61,7 @@ Task Test -depends Setup {
     }
 }
 
-Task Sign -depends Analyze, Test -requiredVariables CertSubjectPath {
+Task Sign -depends Analyze, Test -requiredVariables SecuredSettingsPath {
     if ($CertPfxPath) {
         $CertImport = @{
             CertStoreLocation = 'Cert:\CurrentUser\My'
@@ -63,9 +72,10 @@ Task Sign -depends Analyze, Test -requiredVariables CertSubjectPath {
 
         $Cert = Import-PfxCertificate @CertImport -Verbose:$VerbosePreference
     }
+
     else {
-        if ($CertSubject -eq $null -and (Test-Path -LiteralPath $CertSubjectPath)) {
-            $CertSubject = LoadAndUnencryptString $CertSubjectPath
+        if ($CertSubject -eq $null -and (Test-Path -LiteralPath $SecuredSettingsPath)) {
+            $CertSubject = GetSecuredSetting -Key CertSubject -Path $SecuredSettingsPath
             $LoadedFromSubjectFile = $true
         }
 
@@ -73,20 +83,20 @@ Task Sign -depends Analyze, Test -requiredVariables CertSubjectPath {
             $CertSubject = 'CN='
             $CertSubject += Read-Host -Prompt 'Enter the certificate subject you wish to use (CN= prefix will be added)'
         }
-        
+
         $Cert = Get-ChildItem -Path Cert:\CurrentUser\My -CodeSigningCert |
             Where-Object { $_.Subject -eq $CertSubject -and $_.NotAfter -gt (Get-Date) } |
             Sort-Object -Property NotAfter -Descending | Select-Object -First 1
     }
-    
+
     if ($Cert) {
         if (-not $LoadedFromSubjectFile) {
-            EncryptAndSaveString -String $Cert.Subject -Path $CertSubjectPath
-            Write-Output "The new certificate subject has been stored in $CertSubjectPath"
+            AddSecuredSetting -Key CertSubject -String $Cert.Subject -Path $SecuredSettingsPath
+            Write-Output "The new certificate subject has been stored in $SecuredSettingsPath"
         }
 
         else {
-            Write-Output "Using stored certificate subject $CertSubject from $CertSubjectPath"
+            Write-Output "Using stored certificate subject $CertSubject from $SecuredSettingsPath"
         }
 
         $Authenticode   = @{
@@ -98,7 +108,7 @@ Task Sign -depends Analyze, Test -requiredVariables CertSubjectPath {
         Write-Output -InputObject $Authenticode.FilePath | Out-Default
         Write-Output -InputObject $Authenticode.Certificate | Out-Default
         $SignResult = Set-AuthenticodeSignature @Authenticode -Verbose:$VerbosePreference
-    
+
         if ($SignResult.Status -ne 'Valid') {
             throw "Signing one or more scripts failed."
         }
@@ -109,14 +119,14 @@ Task Sign -depends Analyze, Test -requiredVariables CertSubjectPath {
     }
 }
 
-Task RemoveCertSubject -requiredVariables CertSubjectPath {
-    if (Test-Path -LiteralPath $CertSubjectPath) {
-        Remove-Item -LiteralPath $CertSubjectPath
+Task RemoveCertSubject -requiredVariables SecuredSettingsPath {
+    if (Test-Path -LiteralPath $SecuredSettingsPath) {
+        RemoveSecuredSetting -Path $SecuredSettingsPath -Key CertSubject
     }
 }
 
-Task ShowCertSubject -requiredVariables CertSubjectPath {
-    $CertSubject = LoadAndUnencryptString -Path $CertSubjectPath
+Task ShowCertSubject -requiredVariables SecuredSettingsPath {
+    $CertSubject = GetSecuredSetting -Path $SecuredSettingsPath -Key CertSubject
     Write-Output "The stored certificate is: $CertSubject"
     $Cert = Get-ChildItem -Path Cert:\CurrentUser\My -CodeSigningCert |
             Where-Object { $_.Subject -eq $CertSubject -and $_.NotAfter -gt (Get-Date) } |
@@ -135,31 +145,32 @@ Task Deploy -depends Setup, Analyze, Test {
     if (-not (Test-Path -Path $DeployDir)) {
         New-Item -Path $DeployDir -ItemType Directory -Verbose:$VerbosePreference | Out-Null
     }
-    
+
     Copy-Item -Path "$BuildLocation\*" -Destination $DeployDir -Verbose:$VerbosePreference -Recurse -Force
 }
 
 Task DeploySigned -depends Sign, Deploy {}
 
-Task Publish -depends Setup, Analyze, Test -requiredVariables $EncryptedApiKeyPath {
+Task Publish -depends Setup, Analyze, Test -requiredVariables SecuredSettingsPath {
     if ($NuGetApiKey) {
-        EncryptAndSaveString -NuGetApiKey $NuGetApiKey -Path $EncryptedApiKeyPath
-        Write-Output "The new NuGetApiKey has been stored in $EncryptedApiKeyPath"
+        AddSecuredSetting -Key NuGetApiKey -Value $NuGetApiKey -Path $SecuredSettingsPath
+        Write-Output "The new NuGetApiKey has been stored in $SecuredSettingsPath"
     }
 
-    elseif ($NuGetApiKey -eq $null -and (Test-Path -LiteralPath $EncryptedApiKeyPath)) {
-        $NuGetApiKey = LoadAndUnencryptString $EncryptedApiKeyPath
-        Write-Output "Using stored NuGetApiKey from $EncryptedApiKeyPath"
+    elseif ($NuGetApiKey -eq $null -and (GetSecuredSetting -Path $SecuredSettingsPath -Key NuGetApiKey)) {
+        $NuGetApiKey = GetSecuredSetting -Path $SecuredSettingsPath -Key NuGetApiKey
+        Write-Output "Using stored NuGetApiKey from $SecuredSettingsPath"
     }
 
     else {
         $KeyCred = @{
-            DestinationPath = $EncryptedApiKeyPath
+            DestinationPath = $SecuredSettingsPath
             Message         = 'Enter your NuGet API key in the password field'
+            Key             = 'NuGetApiKey'
         }
         $cred = PromptUserForKeyCredential @KeyCred
         $NuGetApiKey = $cred.GetNetworkCredential().Password
-        "The NuGetApiKey has been stored in $EncryptedApiKeyPath"
+        "The NuGetApiKey has been stored in $SecuredSettingsPath"
     }
 
     $publishParams = @{
@@ -182,26 +193,40 @@ Task Clean {
     }
 }
 
-Task RemoveKey -requiredVariables EncryptedApiKeyPath {
-    if (Test-Path -LiteralPath $EncryptedApiKeyPath) {
-        Remove-Item -LiteralPath $EncryptedApiKeyPath
+Task RemoveKey -requiredVariables SecuredSettingsPath {
+    if (Test-Path -LiteralPath $SecuredSettingsPath) {
+        RemoveSecuredSetting -Path $SecuredSettingsPath -Key NuGetApiKey
     }
 }
 
-Task StoreKey -requiredVariables EncryptedApiKeyPath {
-    PromptUserForKeyCredential -DestinationPath $EncryptedApiKeyPath
-    "The NuGetApiKey has been stored in $EncryptedApiKeyPath"
+Task StoreKey -requiredVariables SecuredSettingsPath {
+    PromptUserForKeyCredential -DestinationPath $SecuredSettingsPath -Key NuGetApiKey
+    "The NuGetApiKey has been stored in $SecuredSettingsPath"
 }
 
-Task ShowKey -requiredVariables EncryptedApiKeyPath {
-    $NuGetApiKey = LoadAndUnencryptString -Path $EncryptedApiKeyPath
-    Write-Output "The stored (partial) NuGetApiKey is: $($NuGetApiKey[0..7])"
-    Write-Output 'To see the full key, use the task "ShowFullKey"'
+Task ShowKey -requiredVariables SecuredSettingsPath {
+    $NuGetApiKey = GetSecuredSetting -Path $SecuredSettingsPath -Key NuGetApiKey
+
+    if ($NuGetApiKey) {
+        Write-Output "The stored (partial) NuGetApiKey is: $($NuGetApiKey[0..7])"
+        Write-Output 'To see the full key, use the task "ShowFullKey"'
+    }
+
+    else {
+        Write-Output 'No stored NugetApiKey found.'
+    }
 }
 
-Task ShowFullKey -requiredVariables EncryptedApiKeyPath {
-    $NuGetApiKey = LoadAndUnencryptString -Path $EncryptedApiKeyPath
-    "The stored NuGetApiKey is: $NuGetApiKey"
+Task ShowFullKey -requiredVariables SecuredSettingsPath {
+    $NuGetApiKey = GetSecuredSetting -Path $SecuredSettingsPath -Key NuGetApiKey
+
+    if ($NuGetApiKey) {
+        Write-Output "The stored NuGetApiKey is: $NuGetApiKey"
+    }
+
+    else {
+        Write-Output 'No stored NugetApiKey found.'
+    }
 }
 
 Task ? -description 'List the available tasks' {
@@ -213,73 +238,103 @@ Task ? -description 'List the available tasks' {
 function PromptUserForKeyCredential {
     [Diagnostics.CodeAnalysis.SuppressMessage("PSProvideDefaultParameterValue", '')]
     param(
-        [Parameter()]
+        [Parameter(Mandatory)]
+        [string]$Message,
+
+        [Parameter(
+            Mandatory,
+            ParameterSetName = 'SaveSetting')]
         [ValidateNotNullOrEmpty()]
         [string]$DestinationPath,
 
-        [Parameter(Mandatory)]
-        [string]$Message
+        [Parameter(
+            Mandatory,
+            ParameterSetName = 'SaveSetting'
+        )]
+        [string]$Key
     )
 
     $KeyCred = Get-Credential -Message $Message -UserName "ignored"
 
     if ($DestinationPath) {
-        EncryptAndSaveString -SecureString $KeyCred.Password -Path $DestinationPath
+        AddSecuredSetting -SecureString $KeyCred.Password -Path $DestinationPath -Key $Key
     }
 
     $KeyCred
 }
 
-function EncryptAndSaveString {
-    [Diagnostics.CodeAnalysis.SuppressMessage("PSAvoidUsingConvertToSecureStringWithPlainText", '')]
-    [Diagnostics.CodeAnalysis.SuppressMessage("PSProvideDefaultParameterValue", '')]
-    param(
-        [Parameter(
-            Mandatory,
-            ParameterSetName='SecureString'
-        )]
+function AddSecuredSetting {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory)]
+        [string]$Key,
+
+        [Parameter(Mandatory)]
+        [string]$Path,
+
+        [Parameter(Mandatory, ParameterSetName='SecureString')]
         [ValidateNotNull()]
         [SecureString]$SecureString,
 
-        [Parameter(
-            Mandatory, 
-            ParameterSetName='PlainText'
-        )]
+        [Parameter(Mandatory, ParameterSetName='PlainText')]
         [ValidateNotNullOrEmpty()]
-        [string]$String,
-
-        [Parameter(Mandatory)]
-        [string]$Path
+        [string]$String
     )
 
-    if ($PSCmdlet.ParameterSetName -eq 'PlainText') {
+    if ($String) {
         $SecureString = ConvertTo-SecureString -String $String -AsPlainText -Force
     }
 
-    $parentDir = Split-Path $Path -Parent
-    
-    if (!(Test-Path -LiteralPath $parentDir)) {
-        $null = New-Item -Path $parentDir -ItemType Directory
+    if (Test-Path -Path $Path) {
+        $StoredSettings = Import-Clixml -Path $Path
+        $StoredSettings.Add($Key, ($SecureString | ConvertFrom-SecureString))
+        $StoredSettings | Export-Clixml -Path $Path
     }
 
-    elseif (Test-Path -LiteralPath $Path) {
-        Remove-Item -LiteralPath $Path
+    else {
+        @{$Key = ($SecureString | ConvertFrom-SecureString)} | Export-Clixml -Path $Path
     }
-
-    $SecureString | ConvertFrom-SecureString | Export-Clixml $Path
-    Write-Verbose "The data has been encrypted and saved to $Path"
 }
 
-function LoadAndUnencryptString {
-    [Diagnostics.CodeAnalysis.SuppressMessage("PSProvideDefaultParameterValue", '')]
-    param(
+function GetSecuredSetting {
+    [CmdletBinding()]
+    Param(
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
+        [string]$Key,
+
+        [Parameter(Mandatory)]
         [string]$Path
     )
 
-    $storedKey = Import-Clixml $Path | ConvertTo-SecureString
-    $cred = New-Object -TypeName PSCredential -ArgumentList 'jpgr',$storedKey
-    $cred.GetNetworkCredential().Password
-    Write-Verbose "The data has been loaded and unencrypted from $Path"
+    if (Test-Path -Path $Path) {
+        $SecuredSettings = Import-Clixml -Path $Path
+
+        if ($SecuredSettings.$Key) {
+            $Value = $SecuredSettings.$Key | ConvertTo-SecureString
+            $cred = New-Object -TypeName PSCredential -ArgumentList 'jpgr', $Value
+            $cred.GetNetworkCredential().Password
+        }
+    }
+}
+
+function RemoveSecuredSetting {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory)]
+        [string]$Key,
+
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
+
+    $StoredSettings = Import-Clixml -Path $Path
+    $StoredSettings.Remove($Key)
+
+    if ($StoredSettings.Count -eq 0) {
+        Remove-Item -Path $Path
+    }
+
+    else {
+        $StoredSettings | Export-Clixml -Path $Path
+    }
 }
