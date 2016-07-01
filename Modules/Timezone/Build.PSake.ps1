@@ -39,12 +39,12 @@ Task Setup -depends BuildManifest {
 }
 
 Task BuildManifest {
+    Write-Verbose -Message "Building manifest in $PSScriptRoot\$ModuleName\Build-Manifest.ps1"
     . "$PSScriptRoot\$ModuleName\Build-Manifest.ps1"
 }
 
 Task Analyze -depends Setup {
-    #$analysisResult = Invoke-ScriptAnalyzer -Path $BuildLocation -Severity @('Error', 'Warning') -Recurse -Verbose:$false
-    $analysisResult = Invoke-ScriptAnalyzer -Path $BuildLocation -Recurse -Verbose:$false
+    $analysisResult = Invoke-ScriptAnalyzer -Path $BuildLocation -Recurse -Verbose:$VerbosePreference
 
     if ($analysisResult) {
         $analysisResult | Format-Table
@@ -70,16 +70,19 @@ Task Sign -depends Analyze, Test -requiredVariables SecuredSettingsPath {
             ErrorAction       = 'Stop'
         }
 
+        Write-Verbose -Message "Importing PFX certificate from $CertPfxPath"
         $Cert = Import-PfxCertificate @CertImport -Verbose:$VerbosePreference
     }
 
     else {
-        if ($CertSubject -eq $null -and (Test-Path -LiteralPath $SecuredSettingsPath)) {
+        if ($CertSubject -eq $null -and (GetSecuredSetting -Key CertSubject -Path $SecuredSettingsPath)) {
+            Write-Verbose -Message 'Getting certificate subject from stored data'
             $CertSubject = GetSecuredSetting -Key CertSubject -Path $SecuredSettingsPath
             $LoadedFromSubjectFile = $true
         }
 
         else {
+            Write-Verbose -Message 'No stored certificate subject, asking user'
             $CertSubject = 'CN='
             $CertSubject += Read-Host -Prompt 'Enter the certificate subject you wish to use (CN= prefix will be added)'
         }
@@ -120,7 +123,8 @@ Task Sign -depends Analyze, Test -requiredVariables SecuredSettingsPath {
 }
 
 Task RemoveCertSubject -requiredVariables SecuredSettingsPath {
-    if (Test-Path -LiteralPath $SecuredSettingsPath) {
+    if (GetSecuredSetting -Path $SecuredSettingsPath -Key CertSubject) {
+        Write-Verbose -Message 'Removing stored CertSubject'
         RemoveSecuredSetting -Path $SecuredSettingsPath -Key CertSubject
     }
 }
@@ -143,6 +147,7 @@ Task ShowCertSubject -requiredVariables SecuredSettingsPath {
 
 Task Deploy -depends Setup, Analyze, Test {
     if (-not (Test-Path -Path $DeployDir)) {
+        Write-Verbose -Message 'Creating deployment directory'
         New-Item -Path $DeployDir -ItemType Directory -Verbose:$VerbosePreference | Out-Null
     }
 
@@ -163,6 +168,7 @@ Task Publish -depends Setup, Analyze, Test -requiredVariables SecuredSettingsPat
     }
 
     else {
+        Write-Verbose -Message 'No stored NuGetApiKey found, asking user'
         $KeyCred = @{
             DestinationPath = $SecuredSettingsPath
             Message         = 'Enter your NuGet API key in the password field'
@@ -189,12 +195,14 @@ Task PublishSigned -depends Sign, Publish {}
 
 Task Clean {
     if (Test-Path -Path $BuildLocation) {
+        Write-Verbose -Message 'Cleaning build directory'
         Remove-Item -Path $BuildLocation -Recurse -Force -Verbose:$VerbosePreference
     }
 }
 
 Task RemoveKey -requiredVariables SecuredSettingsPath {
-    if (Test-Path -LiteralPath $SecuredSettingsPath) {
+    if (GetSecuredSetting -Path $SecuredSettingsPath -Key NuGetApiKey) {
+        Write-Verbose -Message 'Removing stored NuGetApiKey'
         RemoveSecuredSetting -Path $SecuredSettingsPath -Key NuGetApiKey
     }
 }
@@ -221,6 +229,7 @@ Task ShowFullKey -requiredVariables SecuredSettingsPath {
     $NuGetApiKey = GetSecuredSetting -Path $SecuredSettingsPath -Key NuGetApiKey
 
     if ($NuGetApiKey) {
+
         Write-Output "The stored NuGetApiKey is: $NuGetApiKey"
     }
 
