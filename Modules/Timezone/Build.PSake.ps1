@@ -80,9 +80,9 @@ Task Sign -depends Analyze, Test -requiredVariables SecuredSettingsPath {
     }
 
     else {
-        if ($CertSubject -eq $null -and (GetSecuredSetting -Key CertSubject -Path $SecuredSettingsPath)) {
+        if ($CertSubject -eq $null -and (GetSetting -Key CertSubject -Path $SecuredSettingsPath)) {
             Write-Verbose -Message 'Getting certificate subject from stored data'
-            $CertSubject = GetSecuredSetting -Key CertSubject -Path $SecuredSettingsPath
+            $CertSubject = GetSetting -Key CertSubject -Path $SecuredSettingsPath
             $LoadedFromSubjectFile = $true
         }
 
@@ -99,7 +99,7 @@ Task Sign -depends Analyze, Test -requiredVariables SecuredSettingsPath {
 
     if ($Cert) {
         if (-not $LoadedFromSubjectFile) {
-            AddSecuredSetting -Key CertSubject -String $Cert.Subject -Path $SecuredSettingsPath
+            AddSetting -Key CertSubject -Value $Cert.Subject -Path $SecuredSettingsPath
             Write-Output "The new certificate subject has been stored in $SecuredSettingsPath"
         }
 
@@ -128,14 +128,14 @@ Task Sign -depends Analyze, Test -requiredVariables SecuredSettingsPath {
 }
 
 Task RemoveCertSubject -requiredVariables SecuredSettingsPath {
-    if (GetSecuredSetting -Path $SecuredSettingsPath -Key CertSubject) {
+    if (GetSetting -Path $SecuredSettingsPath -Key CertSubject) {
         Write-Verbose -Message 'Removing stored CertSubject'
-        RemoveSecuredSetting -Path $SecuredSettingsPath -Key CertSubject
+        RemoveSetting -Path $SecuredSettingsPath -Key CertSubject
     }
 }
 
 Task ShowCertSubject -requiredVariables SecuredSettingsPath {
-    $CertSubject = GetSecuredSetting -Path $SecuredSettingsPath -Key CertSubject
+    $CertSubject = GetSetting -Path $SecuredSettingsPath -Key CertSubject
     Write-Output "The stored certificate is: $CertSubject"
     $Cert = Get-ChildItem -Path Cert:\CurrentUser\My -CodeSigningCert |
             Where-Object { $_.Subject -eq $CertSubject -and $_.NotAfter -gt (Get-Date) } |
@@ -163,12 +163,12 @@ Task DeploySigned -depends Sign, Deploy {}
 
 Task Publish -depends Setup, Analyze, Test -requiredVariables SecuredSettingsPath {
     if ($NuGetApiKey) {
-        AddSecuredSetting -Key NuGetApiKey -Value $NuGetApiKey -Path $SecuredSettingsPath
+        AddSetting -Key NuGetApiKey -Value $NuGetApiKey -Path $SecuredSettingsPath
         Write-Output "The new NuGetApiKey has been stored in $SecuredSettingsPath"
     }
 
-    elseif ($NuGetApiKey -eq $null -and (GetSecuredSetting -Path $SecuredSettingsPath -Key NuGetApiKey)) {
-        $NuGetApiKey = GetSecuredSetting -Path $SecuredSettingsPath -Key NuGetApiKey
+    elseif ($NuGetApiKey -eq $null -and (GetSetting -Path $SecuredSettingsPath -Key NuGetApiKey)) {
+        $NuGetApiKey = GetSetting -Path $SecuredSettingsPath -Key NuGetApiKey
         Write-Output "Using stored NuGetApiKey from $SecuredSettingsPath"
     }
 
@@ -206,9 +206,9 @@ Task Clean {
 }
 
 Task RemoveKey -requiredVariables SecuredSettingsPath {
-    if (GetSecuredSetting -Path $SecuredSettingsPath -Key NuGetApiKey) {
+    if (GetSetting -Path $SecuredSettingsPath -Key NuGetApiKey) {
         Write-Verbose -Message 'Removing stored NuGetApiKey'
-        RemoveSecuredSetting -Path $SecuredSettingsPath -Key NuGetApiKey
+        RemoveSetting -Path $SecuredSettingsPath -Key NuGetApiKey
     }
 }
 
@@ -223,7 +223,7 @@ Task StoreKey -requiredVariables SecuredSettingsPath {
 }
 
 Task ShowKey -requiredVariables SecuredSettingsPath {
-    $NuGetApiKey = GetSecuredSetting -Path $SecuredSettingsPath -Key NuGetApiKey
+    $NuGetApiKey = GetSetting -Path $SecuredSettingsPath -Key NuGetApiKey
 
     if ($NuGetApiKey) {
         Write-Output "The stored (partial) NuGetApiKey is: $($NuGetApiKey[0..7])"
@@ -236,7 +236,7 @@ Task ShowKey -requiredVariables SecuredSettingsPath {
 }
 
 Task ShowFullKey -requiredVariables SecuredSettingsPath {
-    $NuGetApiKey = GetSecuredSetting -Path $SecuredSettingsPath -Key NuGetApiKey
+    $NuGetApiKey = GetSetting -Path $SecuredSettingsPath -Key NuGetApiKey
 
     if ($NuGetApiKey) {
         Write-Output "The stored NuGetApiKey is: $NuGetApiKey"
@@ -256,34 +256,29 @@ Task ? -description 'List the available tasks' {
 function PromptUserForKeyCredential {
     [Diagnostics.CodeAnalysis.SuppressMessage("PSProvideDefaultParameterValue", '')]
     param(
-        [Parameter(Mandatory)]
-        [string]$Message,
-
-        [Parameter(
-            Mandatory,
-            ParameterSetName = 'SaveSetting')]
+        [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$DestinationPath,
+        [string]
+        $DestinationPath,
 
-        [Parameter(
-            Mandatory,
-            ParameterSetName = 'SaveSetting'
-        )]
-        [string]$Key
+        [Parameter(Mandatory)]
+        [string]
+        $Message,
+
+        [Parameter(Mandatory, ParameterSetName = 'SaveSetting')]
+        [string]
+        $Key
     )
 
     $KeyCred = Get-Credential -Message $Message -UserName "ignored"
-
     if ($DestinationPath) {
-        AddSecuredSetting -SecureString $KeyCred.Password -Path $DestinationPath -Key $Key
+        AddSetting -Key $Key -Value $KeyCred.Password -Path $DestinationPath
     }
 
     $KeyCred
 }
 
-function AddSecuredSetting {
-    [CmdletBinding()]
-    [Diagnostics.CodeAnalysis.SuppressMessage("PSAvoidUsingConvertToSecureStringWithPlainText", '')]
+function AddSetting {
     Param(
         [Parameter(Mandatory)]
         [string]$Key,
@@ -291,32 +286,31 @@ function AddSecuredSetting {
         [Parameter(Mandatory)]
         [string]$Path,
 
-        [Parameter(Mandatory, ParameterSetName='SecureString')]
+        [Parameter(Mandatory)]
         [ValidateNotNull()]
-        [SecureString]$SecureString,
-
-        [Parameter(Mandatory, ParameterSetName='PlainText')]
-        [ValidateNotNullOrEmpty()]
-        [string]$String
+        [object]$Value
     )
 
-    if ($String) {
-        $SecureString = ConvertTo-SecureString -String $String -AsPlainText -Force
+    switch ($Type = $Value.GetType().Name) {
+        'securestring' {
+            $Setting = $Value | ConvertFrom-SecureString
+        }
+        default {
+            $Setting = $Value
+        }
     }
 
     if (Test-Path -Path $Path) {
         $StoredSettings = Import-Clixml -Path $Path
-        $StoredSettings.Add($Key, ($SecureString | ConvertFrom-SecureString))
+        $StoredSettings.Add($Key, @($Type, $Setting))
         $StoredSettings | Export-Clixml -Path $Path
     }
-
     else {
-        @{$Key = ($SecureString | ConvertFrom-SecureString)} | Export-Clixml -Path $Path
+        @{$Key = @($Type, $Setting)} | Export-Clixml -Path $Path
     }
 }
 
-function GetSecuredSetting {
-    [CmdletBinding()]
+function GetSetting {
     Param(
         [Parameter(Mandatory)]
         [string]$Key,
@@ -327,17 +321,22 @@ function GetSecuredSetting {
 
     if (Test-Path -Path $Path) {
         $SecuredSettings = Import-Clixml -Path $Path
-
         if ($SecuredSettings.$Key) {
-            $Value = $SecuredSettings.$Key | ConvertTo-SecureString
-            $cred = New-Object -TypeName PSCredential -ArgumentList 'jpgr', $Value
-            $cred.GetNetworkCredential().Password
+            switch ($SecuredSettings.$Key[0]) {
+                'securestring' {
+                    $Value = $SecuredSettings.$Key[1] | ConvertTo-SecureString
+                    $cred = New-Object -TypeName PSCredential -ArgumentList 'jpgr', $Value
+                    $cred.GetNetworkCredential().Password
+                }
+                default {
+                    $SecuredSettings.$Key[1]
+                }
+            }
         }
     }
 }
 
-function RemoveSecuredSetting {
-    [CmdletBinding()]
+function RemoveSetting {
     Param(
         [Parameter(Mandatory)]
         [string]$Key,
@@ -348,11 +347,9 @@ function RemoveSecuredSetting {
 
     $StoredSettings = Import-Clixml -Path $Path
     $StoredSettings.Remove($Key)
-
     if ($StoredSettings.Count -eq 0) {
         Remove-Item -Path $Path
     }
-
     else {
         $StoredSettings | Export-Clixml -Path $Path
     }
