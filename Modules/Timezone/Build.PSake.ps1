@@ -213,7 +213,12 @@ Task RemoveKey -requiredVariables SecuredSettingsPath {
 }
 
 Task StoreKey -requiredVariables SecuredSettingsPath {
-    PromptUserForKeyCredential -DestinationPath $SecuredSettingsPath -Key NuGetApiKey
+    $KeyCred = @{
+        DestinationPath = $SecuredSettingsPath
+        Message         = 'Enter your NuGet API key in the password field'
+        Key             = 'NuGetApiKey'
+    }
+    PromptUserForKeyCredential @KeyCred
     "The NuGetApiKey has been stored in $SecuredSettingsPath"
 }
 
@@ -234,7 +239,6 @@ Task ShowFullKey -requiredVariables SecuredSettingsPath {
     $NuGetApiKey = GetSecuredSetting -Path $SecuredSettingsPath -Key NuGetApiKey
 
     if ($NuGetApiKey) {
-
         Write-Output "The stored NuGetApiKey is: $NuGetApiKey"
     }
 
