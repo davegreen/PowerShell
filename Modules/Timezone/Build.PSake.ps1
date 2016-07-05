@@ -3,11 +3,6 @@ Properties {
     $BuildLocation = "$($env:TEMP)\$ModuleName"
     $DeployDir     = "$($($env:PSModulePath).Split(';')[0])\$ModuleName"
 
-    # Prevent potential pollution of the build environment optional parameters. 
-    $CertSubject = $null
-    $NuGetApiKey = $null
-    $PublishRepository = $null
-
     # If you do not specify the NuGetApiKey as a build parameter, the first time
     # you publish you will be prompted to enter your API key. The build will store
     # the key encrypted in a file, so that on subsequent publishes you will no
@@ -180,7 +175,7 @@ Task Publish -depends Setup, Analyze, Test -requiredVariables SettingsPath {
             Message         = 'Enter your NuGet API key in the password field'
             Key             = 'NuGetApiKey'
         }
-        
+
         $cred = PromptUserForKeyCredential @KeyCred
         $NuGetApiKey = $cred.GetNetworkCredential().Password
         "The NuGetApiKey has been stored in $SettingsPath"
