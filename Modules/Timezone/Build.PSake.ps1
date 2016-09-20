@@ -1,7 +1,7 @@
 Properties {
     $ModuleName    = (Get-Item -Path $PSScriptRoot).Name
     $BuildLocation = "$($env:TEMP)\$ModuleName"
-    $DeployDir     = "$($($env:PSModulePath).Split(';')[0])\$ModuleName"
+    $DeployDir     = Join-Path -Path (Split-Path $profile.CurrentUserAllHosts -Parent) -ChildPath $ModuleName
 
     # If you do not specify the NuGetApiKey as a build parameter, the first time
     # you publish you will be prompted to enter your API key. The build will store
