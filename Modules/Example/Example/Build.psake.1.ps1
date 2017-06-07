@@ -6,7 +6,7 @@ Properties {
 
 Task default -depends Setup, Clean
 
-Task Setup -depends -requiredVariables BuildLocation {
+Task Setup -requiredVariables BuildLocation {
     if (-not (Test-Path -Path $BuildLocation)) {
         New-Item -Path $BuildLocation -ItemType Directory -Verbose:$VerbosePreference | Out-Null
     }
