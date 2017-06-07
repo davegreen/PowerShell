@@ -3,7 +3,7 @@
     Author: David Green
 
     http://www.tookitaway.co.uk/
-	
+
 #>
 
 $ModuleBase = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -26,8 +26,8 @@ $ModuleDescription = @{
     Author            = 'David Green'
     CompanyName       = 'http://tookitaway.co.uk/, https://github.com/davegreen/PowerShell/'
     Copyright         = '(c) 2016 David Green. All rights reserved.'
-    PowerShellVersion = '5.0'
-    ModuleVersion     = '1.2.3'
+    PowerShellVersion = '4.0'
+    ModuleVersion     = '1.2.4'
     FileList          = $FileList
     FunctionsToExport = $commands.Name
     CmdletsToExport   = $commands.Name
@@ -43,7 +43,6 @@ $ModuleDescription = @{
 if (Test-Path -Path $ModuleDescription.Path) {
     Update-ModuleManifest @ModuleDescription
 }
-
 else {
     New-ModuleManifest @ModuleDescription
 }
