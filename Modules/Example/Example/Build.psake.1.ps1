@@ -31,6 +31,11 @@ Task Deploy -depends Setup -requiredVariables DeployDir, BuildLocation {
     Copy-Item -Path "$BuildLocation\*" -Destination $DeployDir -Verbose:$VerbosePreference -Recurse -Force
 }
 
+Task ShowProperties {
+    Write-Output $PSake.Context.Peek().Properties
+    Write-Output "Overriden Buildlocation: $BuildLocation"
+}
+
 Task Clean -requiredVariables BuildLocation {
     if (Test-Path -Path $BuildLocation) {
         Write-Verbose -Message 'Cleaning build directory'

@@ -22,6 +22,12 @@ Invoke-psake -buildFile .\Build.psake.1.ps1 -taskList Deploy, ?
 # What about the other way around (task ordering)
 Invoke-psake -buildFile .\Build.psake.1.ps1 -taskList ?, Deploy
 
+# Show properties peek
+Invoke-psake -buildFile .\Build.psake.1.ps1 -task ShowProperties
+
+# Can I override build properties
+Invoke-psake -buildFile .\Build.psake.1.ps1 -task deploy -properties @{ buildlocation = 'release' }
+
 # Let's get into testing things a little
 Invoke-psake -buildFile .\Build.psake.2.ps1 -docs
 Invoke-psake -buildFile .\Build.psake.2.ps1
@@ -51,4 +57,7 @@ Invoke-psake -buildFile .\Build.psake.4.ps1 -taskList publish
 # Why can't I save some of the settings so this isn't boring?
 # Using build properties
 # Separating this out
+
 # Storing secrets
+Invoke-psake -buildFile .\Build.psake.ps1 -taskList sign, publish
+. "C:\Program Files (x86)\Microsoft VS Code\Code.exe" C:\Users\green\AppData\Local\Plaster\NewModuleTemplate\SecuredBuildSettings.clixml
