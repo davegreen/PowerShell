@@ -143,7 +143,7 @@ Task Clean -requiredVariables BuildLocation {
     }
 }
 
-Task ? -description 'List the available tasks' {
+Task ? -alias 'Help' -description 'List the available tasks' {
     Write-Output 'Available tasks:'
     Write-Output $PSake.Context.Peek().Tasks.Keys | Sort-Object
 }

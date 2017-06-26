@@ -78,7 +78,7 @@ Task Sign -depends Analyze, Test -requiredVariables BuildLocation {
     }
 
     if ($Cert) {
-        $Authenticode   = @{
+        $Authenticode = @{
             FilePath    = @(Get-ChildItem -Path "$BuildLocation\*" -Recurse -Include '*.ps1', '*.psm1')
             Certificate = Get-ChildItem Cert:\CurrentUser\My |
                 Where-Object { $_.Thumbprint -eq $Cert.Thumbprint }
@@ -87,6 +87,7 @@ Task Sign -depends Analyze, Test -requiredVariables BuildLocation {
         Write-Output -InputObject $Authenticode.FilePath | Out-Default
         Write-Output -InputObject $Authenticode.Certificate | Out-Default
         $SignResult = Set-AuthenticodeSignature @Authenticode -Verbose:$VerbosePreference
+        # Write-Output $SignResult
 
         if ($SignResult.Status -ne 'Valid') {
             throw "Signing one or more scripts failed."
@@ -116,7 +117,7 @@ Task Clean -requiredVariables BuildLocation {
     }
 }
 
-Task ? -description 'List the available tasks' {
+Task ? -alias 'Help' -description 'List the available tasks' {
     Write-Output 'Available tasks:'
     Write-Output $PSake.Context.Peek().Tasks.Keys | Sort-Object
 }

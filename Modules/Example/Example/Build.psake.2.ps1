@@ -61,7 +61,7 @@ Task Clean -requiredVariables BuildLocation {
     }
 }
 
-Task ? -description 'List the available tasks' {
+Task ? -alias 'Help' -description 'List the available tasks' -preaction { Write-Host 'Help is on the way!'; $global:1 = $false } -precondition { $1 -eq $null } {
     Write-Output 'Available tasks:'
     Write-Output $PSake.Context.Peek().Tasks.Keys | Sort-Object
 }
