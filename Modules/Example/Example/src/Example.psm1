@@ -1,6 +1,4 @@
-# Exported Functions
-. $PSScriptRoot\Get-Timezone.ps1
-. $PSScriptRoot\Set-Timezone.ps1
-
-# Support Files
-. $PSScriptRoot\ArgumentCompleter.ps1
+# Import module files
+Get-ChildItem -Path $PSScriptRoot -Filter '*.ps1' | ForEach-Object {
+    . $_.FullName
+}
