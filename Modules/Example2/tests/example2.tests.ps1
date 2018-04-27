@@ -1,19 +1,21 @@
 #Requires -Module Pester
 
-if ((Get-Module).Name -contains 'Timezone') {
-    Remove-Module -Name Timezone
+$ModuleName = (Get-Item -Path $PSScriptRoot\..).Name
+
+if ((Get-Module).Name -contains $ModuleName) {
+    Remove-Module -Name $ModuleName
 }
 
-Import-Module "$PSScriptRoot\..\Timezone.psm1"
+Import-Module "$PSScriptRoot\..\src\$ModuleName.psm1"
 
 Describe 'Module Manifest Tests' {
     It 'Passes Test-ModuleManifest' {
-        Test-ModuleManifest -Path "$PSScriptRoot\..\Timezone.psd1"
+        Test-ModuleManifest -Path "$PSScriptRoot\..\src\$ModuleName.psd1"
         $? | Should Be $true
     }
 }
 
-InModuleScope Timezone {
+InModuleScope $ModuleName {
     Describe 'Get-Timezone' {
         Context 'UTC' {
             It 'Returns the current Timezone object' {
@@ -132,4 +134,4 @@ InModuleScope Timezone {
     }
 }
 
-Remove-Module -Name Timezone
+Remove-Module -Name $ModuleName
