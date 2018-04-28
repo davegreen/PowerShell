@@ -1,4 +1,3 @@
-#Requires -Module psake, Pester, PsScriptAnalyzer
 [CmdletBinding()]
 
 Param (
@@ -8,7 +7,11 @@ Param (
 
     [Parameter()]
     [System.Collections.Hashtable]
-    $Parameters
+    $Parameters,
+
+    [Parameter()]
+    [switch]
+    $InstallPrerequisites
 )
 
 $psake = @{
@@ -19,6 +22,17 @@ $psake = @{
 
 if ($Parameters) {
     $psake.parameters = $Parameters
+}
+
+# Prerequisites
+if ($InstallPrerequisites) {
+    if (-not (Get-PackageProvider -Name NuGet -ErrorAction SilentlyContinue)) {
+        Install-PackageProvider -Name NuGet -Force -Scope CurrentUser
+    }
+
+    'pester', 'psake' | ForEach-Object {
+        Install-Module -Name $_ -Force -Verbose -Scope CurrentUser -SkipPublisherCheck
+    }
 }
 
 . $PSScriptRoot\Build.manifest.ps1
